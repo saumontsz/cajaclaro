@@ -16,7 +16,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-blue-600 dark:text-blue-500 font-bold text-xl">
             <Activity size={24} />
-            <span>CajaClaro</span>
+            <span>Flujent</span>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
@@ -191,7 +191,7 @@ export default function LandingPage() {
       
       {/* PIE DE PÁGINA */}
       <footer className="py-8 text-center text-slate-500 dark:text-slate-600 text-sm border-t border-gray-200 dark:border-slate-800">
-        <p>© {new Date().getFullYear()} CajaClaro. Hecho en Chile para emprendedores con visión.</p>
+        <p>© {new Date().getFullYear()} Flujent. Hecho en Chile para emprendedores con visión.</p>
       </footer>
     </div>
   )

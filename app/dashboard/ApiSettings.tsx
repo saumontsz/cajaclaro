@@ -38,7 +38,7 @@ export default function ApiSettings({ plan, apiKey }: Props) {
 
       <div className="p-6">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 transition-colors">
-          Conecta CajaClaro con sistemas externos (como tu web de reservas, Shopify o Zapier) para que tus ingresos se registren automáticamente sin mover un dedo.
+          Conecta Flujent con sistemas externos (como tu web de reservas, Shopify o Zapier) para que tus ingresos se registren automáticamente sin mover un dedo.
         </p>
 
         {tieneApi ? (

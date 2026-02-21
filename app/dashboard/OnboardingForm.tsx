@@ -11,7 +11,7 @@ export default function OnboardingForm() {
   if (!tipoUso) {
     return (
       <div className="flex flex-col gap-4 animate-in fade-in zoom-in duration-300">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">¿Cómo usarás CajaClaro?</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">¿Cómo usarás Flujent?</h2>
         <p className="text-center text-gray-500 mb-4 text-sm">Elige tu perfil para adaptar tu experiencia.</p>
         
         <button onClick={() => setTipoUso('personal')} className="p-5 border-2 border-gray-100 hover:border-blue-500 bg-white rounded-2xl flex items-center gap-4 transition-all shadow-sm hover:shadow-md group text-left">

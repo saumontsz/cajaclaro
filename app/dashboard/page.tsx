@@ -8,7 +8,7 @@ import ImportadorExcel from './ImportadorExcel'
 import OnboardingForm from './OnboardingForm'
 import GraficosFinancieros from './GraficosFinancieros'
 import BotonExportarExcel from './BotonExportarExcel'
-// 1. Importamos el botón de tema
+
 import ThemeToggle from './ThemeToggle'
 
 export default async function DashboardPage() {
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50 transition-colors">
         <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
           <Activity className="text-blue-600 dark:text-blue-500" size={20} />
-          <span>CajaClaro</span>
+          <span>Flujent</span>
           <span className="text-gray-300 dark:text-slate-700 font-light px-2">|</span>
           <span className="text-gray-600 dark:text-slate-400 font-normal">{negocio.nombre}</span>
         </div>

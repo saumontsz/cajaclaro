@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { mess
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-blue-500 font-bold text-2xl mb-2">
             <Activity size={28} />
-            <span>CajaClaro</span>
+            <span>Flujent</span>
           </Link>
           <h2 className="text-2xl font-bold text-white">Accede a tu cuenta</h2>
           <p className="text-slate-400 text-sm mt-2">Controla tus finanzas y proyecta tu futuro.</p>

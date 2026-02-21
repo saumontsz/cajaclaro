@@ -6,7 +6,7 @@ import { ThemeProvider } from "./ThemeProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CajaClaro | MVP",
+  title: "Flujent | Inteligencia Financiera",
   description: "Proyecciones financieras para microemprendedores",
 };
 
