@@ -2,6 +2,7 @@ import { Activity, ArrowRight, TrendingUp, Clock, DollarSign, Receipt, PlayCircl
 import Link from "next/link";
 
 
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -142,7 +143,7 @@ export default function LandingPage() {
                   <Clock className="text-blue-600" size={24} />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Simulador de Estrés</h3>
-                <p className="text-gray-600 leading-relaxed">¿Qué pasa si llueve y caen las reservas un 20%? Activa el simulador y descubre al instante si tu caja aguanta para pagar los costos fijos.</p>
+                <p className="text-gray-600 leading-relaxed">¿Qué pasa si caen las reservas un 20%? Activa el simulador y descubre al instante si tu caja aguanta para pagar los costos fijos.</p>
               </div>
 
               <div className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-md transition-shadow hover:bg-white hover:border-blue-100 group">
@@ -156,52 +157,73 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing Section */}
+  {/* Pricing Section - 3 Planes */}
         <section className="py-24 bg-gray-50">
-          <div className="max-w-5xl mx-auto px-6">
+          <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Precios simples y transparentes</h2>
-              <p className="text-gray-500">Comienza a controlar tus números gratis. Automatiza cuando crezcas.</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Planes diseñados para tu realidad</h2>
+              <p className="text-gray-500">Desde organizar tu sueldo hasta automatizar tu empresa.</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-center">
+              
               {/* Plan Gratis */}
-              <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm flex flex-col hover:border-blue-200 transition-colors">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Manual</h3>
-                <div className="flex items-baseline gap-2 mb-6">
+              <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm flex flex-col hover:border-blue-200 transition-colors h-full">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Prueba</h3>
+                <div className="flex items-baseline gap-1 mb-6">
                   <span className="text-4xl font-bold text-gray-900">$0</span>
-                  <span className="text-gray-500 font-medium">/mes</span>
                 </div>
+                <p className="text-sm text-gray-500 mb-6">Para explorar la plataforma y ver si es para ti.</p>
                 <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-blue-600" /> Registro manual de movimientos</li>
-                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-blue-600" /> Simulador de escenarios</li>
-                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-blue-600" /> Cálculo de días de supervivencia</li>
+                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-gray-400" /> Registro manual (límite mensual)</li>
+                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-gray-400" /> Simulador básico</li>
                 </ul>
-                <Link href="/login" className="w-full py-3 px-4 bg-blue-50 text-blue-700 font-medium rounded-xl hover:bg-blue-100 transition-colors text-center">
+                <Link href="/login" className="w-full py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors text-center">
                   Crear cuenta gratis
                 </Link>
               </div>
 
-              {/* Plan Premium */}
-              <div className="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-xl flex flex-col relative overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
-                <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
-                  Recomendado
+              {/* Plan Personal */}
+              <div className="bg-white p-8 rounded-3xl border-2 border-blue-500 shadow-xl flex flex-col relative transform md:-translate-y-4 h-full z-10">
+                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl uppercase tracking-wider">
+                  Más popular
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Automático</h3>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-4xl font-bold text-white">$15</span>
-                  <span className="text-gray-400 font-medium">/mes</span>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Personal</h3>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-bold text-gray-900">$5.990</span>
+                  <span className="text-gray-500 font-medium text-sm">CLP/mes</span>
                 </div>
+                <p className="text-sm text-gray-500 mb-6">Para personas que quieren entender en qué se va su plata y empezar a ahorrar.</p>
                 <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> <strong className="text-white">Todo lo del plan Gratis</strong></li>
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Acceso a la API secreta</li>
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Integración con Zapier / Webhooks</li>
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Ingreso automático de dinero</li>
+                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Movimientos ilimitados</li>
+                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Gráficos de análisis de gastos</li>
+                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Consejos de ahorro inteligentes</li>
+                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Importación de cartola (Excel)</li>
                 </ul>
-                <Link href="/login" className="w-full py-3 px-4 bg-yellow-400 text-yellow-900 font-bold rounded-xl hover:bg-yellow-500 transition-colors text-center shadow-lg shadow-yellow-400/20">
-                  Subir a Automático
+                <Link href="/login" className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors text-center shadow-lg shadow-blue-600/20">
+                  Comenzar Plan Personal
                 </Link>
               </div>
+
+              {/* Plan Empresa */}
+              <div className="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-lg flex flex-col h-full">
+                <h3 className="text-xl font-semibold text-white mb-2">Empresa</h3>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-bold text-white">$20.000</span>
+                  <span className="text-gray-400 font-medium text-sm">CLP/mes</span>
+                </div>
+                <p className="text-sm text-gray-400 mb-6">Para negocios y Pymes que necesitan automatizar su flujo de caja.</p>
+                <ul className="space-y-4 mb-8 flex-1">
+                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> <strong className="text-white">Todo lo del plan Personal</strong></li>
+                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> API secreta para integraciones</li>
+                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Conexión con software de reservas</li>
+                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Cálculo avanzado de Supervivencia</li>
+                </ul>
+                <Link href="/login" className="w-full py-3 px-4 bg-yellow-400 text-yellow-900 font-bold rounded-xl hover:bg-yellow-500 transition-colors text-center">
+                  Subir a Empresa
+                </Link>
+              </div>
+
             </div>
           </div>
         </section>

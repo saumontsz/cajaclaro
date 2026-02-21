@@ -1,79 +1,84 @@
 'use client'
 
 import { useState } from 'react'
-import { Activity, Percent, Calendar, Wallet, TrendingDown } from 'lucide-react'
+import { AlertTriangle, ShieldAlert } from 'lucide-react'
 
-// Definimos la forma de los datos que recibimos
 interface Props {
   negocio: {
-    saldo_actual: number
-    ingresos_mensuales: number
-    gastos_fijos: number
-    gastos_variables: number
+    saldo_actual: number;
+    ingresos_mensuales: number;
+    gastos_fijos: number;
+    gastos_variables: number;
   }
 }
 
+// 1. Agregamos la función de formato aquí también
+const formatoCLP = (valor: number) => {
+  return new Intl.NumberFormat('es-CL').format(Math.round(valor));
+};
+
 export default function Simulador({ negocio }: Props) {
-  const [simular, setSimular] = useState(false)
-
-  // Si estamos simulando, bajamos los ingresos un 20%
-  const ingresos = simular ? negocio.ingresos_mensuales * 0.8 : negocio.ingresos_mensuales
-  const gastosTotales = negocio.gastos_fijos + negocio.gastos_variables
+  const [caida, setCaida] = useState(0)
   
-  // Recalculamos todo con el nuevo ingreso
-  const flujoMensual = ingresos - gastosTotales
-  const margen = ingresos > 0 ? Math.round((flujoMensual / ingresos) * 100) : 0
-  const gastoDiario = gastosTotales / 30
-  const diasSupervivencia = gastoDiario > 0 ? Math.round(negocio.saldo_actual / gastoDiario) : 9999
-  const proyeccion90Dias = negocio.saldo_actual + (flujoMensual * 3)
-
-  const colorSupervivencia = diasSupervivencia < 30 ? 'text-red-600' : diasSupervivencia < 90 ? 'text-yellow-600' : 'text-gray-900'
+  const ingresosSimulados = negocio.ingresos_mensuales * (1 - (caida / 100))
+  const gastosTotales = negocio.gastos_fijos + negocio.gastos_variables
+  const flujoNetoSimulado = ingresosSimulados - gastosTotales
+  
+  // Meses de cobertura (Runway)
+  const mesesCobertura = flujoNetoSimulado < 0 
+    ? Math.abs(negocio.saldo_actual / flujoNetoSimulado)
+    : Infinity
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mt-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Simulador de Escenarios</h2>
-          <p className="text-sm text-gray-500">¿Qué pasa si las ventas caen este mes?</p>
+    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-8">
+      <div className="flex items-center gap-2 mb-4">
+        <ShieldAlert className="text-blue-600" size={20} />
+        <h3 className="text-lg font-semibold text-gray-900">Simulador de Riesgo</h3>
+      </div>
+      <p className="text-sm text-gray-500 mb-6">
+        ¿Qué pasa si tienes un mal mes o tus ingresos caen? Ajusta el porcentaje para ver cuánto tiempo de cobertura te queda con tu liquidez actual.
+      </p>
+
+      <div className="mb-8">
+        <div className="flex justify-between text-sm font-medium mb-2">
+          <span className="text-gray-700">Caída en ingresos</span>
+          <span className="text-red-600">-{caida}%</span>
         </div>
-        
-        {/* Botón (Toggle) para activar/desactivar la simulación */}
-        <button
-          onClick={() => setSimular(!simular)}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-            simular 
-              ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100' 
-              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
-          }`}
-        >
-          <TrendingDown size={16} />
-          {simular ? 'Desactivar simulación' : 'Simular caída del 20%'}
-        </button>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          step="5"
+          value={caida}
+          onChange={(e) => setCaida(Number(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500"
+        />
       </div>
 
-      {/* Mostramos los resultados solo si la simulación está activa para no ser redundantes */}
-      {simular ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 rounded-lg border border-gray-100">
-          <div>
-            <span className="text-xs text-gray-500 uppercase font-semibold">Nuevo Flujo</span>
-            <p className={`text-xl font-bold mt-1 ${flujoMensual < 0 ? 'text-red-600' : 'text-gray-900'}`}>${flujoMensual}</p>
-          </div>
-          <div>
-            <span className="text-xs text-gray-500 uppercase font-semibold">Nuevo Margen</span>
-            <p className={`text-xl font-bold mt-1 ${margen < 0 ? 'text-red-600' : 'text-gray-900'}`}>{margen}%</p>
-          </div>
-          <div>
-            <span className="text-xs text-gray-500 uppercase font-semibold">Días de Vida</span>
-            <p className={`text-xl font-bold mt-1 ${colorSupervivencia}`}>{diasSupervivencia}</p>
-          </div>
-          <div>
-            <span className="text-xs text-gray-500 uppercase font-semibold">Caja a 90 Días</span>
-            <p className={`text-xl font-bold mt-1 ${proyeccion90Dias < 0 ? 'text-red-600' : 'text-gray-900'}`}>${proyeccion90Dias}</p>
-          </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <span className="block text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Nuevos Ingresos</span>
+          {/* 2. Aplicamos el formato aquí */}
+          <span className="text-xl font-bold text-gray-900">${formatoCLP(ingresosSimulados)}</span>
         </div>
-      ) : (
-        <div className="p-8 text-center text-gray-400 border border-dashed border-gray-200 rounded-lg">
-          Activa el simulador para ver el impacto de una caída del 20% en tus ingresos sobre la liquidez de tu negocio.
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <span className="block text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Flujo Neto</span>
+          {/* 3. Aplicamos el formato y mejoramos cómo se ve el signo (+ o -) */}
+          <span className={`text-xl font-bold ${flujoNetoSimulado < 0 ? 'text-red-600' : 'text-green-600'}`}>
+            {flujoNetoSimulado > 0 ? '+$' : (flujoNetoSimulado < 0 ? '-$' : '$')}{formatoCLP(Math.abs(flujoNetoSimulado))}
+          </span>
+        </div>
+      </div>
+
+      {flujoNetoSimulado < 0 && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={18} />
+          <div>
+            <h4 className="text-sm font-bold text-red-900">Tiempo de cobertura: {mesesCobertura === Infinity ? 'Ilimitado' : mesesCobertura.toFixed(1)} meses</h4>
+            <p className="text-xs text-red-700 mt-1">
+              A este ritmo, tu caja actual se vaciará en menos de {Math.ceil(mesesCobertura)} meses.
+            </p>
+          </div>
         </div>
       )}
     </div>
