@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { crearNegocio, cerrarSesion, agregarTransaccion } from './actions'
 import { Activity, LogOut, Wallet, Calendar, AlertTriangle, ArrowUpCircle, ArrowDownCircle, PlusCircle } from 'lucide-react'
 import Simulador from './Simulador'
+import ApiSettings from './ApiSettings'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -12,7 +13,7 @@ export default async function DashboardPage() {
 
   const { data: negocio } = await supabase
     .from('negocios')
-    .select('*')
+    .select('*, plan, api_key')
     .eq('user_id', user.id)
     .single()
 
@@ -208,15 +209,18 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* Simulador (Le pasamos los datos actualizados) */}
+            {/* Simulador */}
             <Simulador 
               negocio={{
-                saldo_actual: cajaViva, // Usamos la caja real para la simulación
+                saldo_actual: cajaViva,
                 ingresos_mensuales: negocio.ingresos_mensuales,
                 gastos_fijos: negocio.gastos_fijos,
                 gastos_variables: negocio.gastos_variables
               }} 
             />
+
+            {/* Ajustes de API */}
+            <ApiSettings plan={negocio.plan} apiKey={negocio.api_key} />
 
           </div>
         </div>
