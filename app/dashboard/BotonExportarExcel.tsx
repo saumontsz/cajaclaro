@@ -36,7 +36,8 @@ export default function BotonExportarExcel({ transacciones }: Props) {
   return (
     <button 
       onClick={exportar}
-      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors border border-blue-100 shadow-sm"
+      // Clases actualizadas con soporte para dark mode (dark:...)
+      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-3 py-1.5 rounded-md transition-colors border border-blue-100 dark:border-blue-800/50 shadow-sm"
       title="Descargar historial en Excel"
     >
       <Download size={14} />

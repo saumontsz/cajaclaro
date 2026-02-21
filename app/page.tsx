@@ -1,241 +1,198 @@
-import { Activity, ArrowRight, TrendingUp, Clock, DollarSign, Receipt, PlayCircle, CheckCircle } from "lucide-react";
+'use client'
+
+import { useState } from 'react'
+import { Activity, ArrowRight, TrendingUp, ShieldCheck, Zap, BarChart3, Check } from "lucide-react";
 import Link from "next/link";
-
-
+import ThemeToggle from './dashboard/ThemeToggle' 
 
 export default function LandingPage() {
+  const [anual, setAnual] = useState(false)
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
       
-      {/* Navegación */}
-      <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-900 font-bold text-lg tracking-tight">
-            <Activity className="text-blue-600" size={24} />
+      {/* BARRA DE NAVEGACIÓN */}
+      <nav className="border-b border-gray-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-500 font-bold text-xl">
+            <Activity size={24} />
             <span>CajaClaro</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              Iniciar sesión
+            <ThemeToggle />
+            <Link href="/login" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+              Iniciar Sesión
             </Link>
-            <Link href="/login" className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Empezar gratis
+            <Link href="/login" className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-md shadow-blue-500/20 active:scale-95">
+              Comenzar Gratis
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="pt-24 pb-16 px-6 overflow-hidden">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <main>
+        {/* SECCIÓN PRINCIPAL (HERO) */}
+        <section className="pt-24 pb-16 px-6 text-center max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium mb-6 border border-purple-200 dark:border-purple-800/50">
+            <Zap size={16} className="text-purple-500" />
+            <span>El motor financiero para tu negocio</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6 leading-tight">
+            Tus números claros.<br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-500 dark:from-blue-400 dark:to-green-400">
+              Tu futuro asegurado.
+            </span>
+          </h1>
+          
+          <p className="text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
+            Controla tus ingresos, simula escenarios de riesgo y descubre exactamente cuánto tiempo de vida tiene tu emprendimiento. Todo en un solo lugar.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group">
+              Crear mi cuenta <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link href="#precios" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 text-lg font-semibold rounded-xl transition-all flex items-center justify-center">
+              Ver planes
+            </Link>
+          </div>
+        </section>
+
+        {/* SECCIÓN DE CARACTERÍSTICAS */}
+        <section className="py-20 bg-white dark:bg-slate-900 border-y border-gray-200 dark:border-slate-800 transition-colors">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Diseñado para la tranquilidad mental</h2>
+              <p className="text-slate-600 dark:text-slate-400">Herramientas de nivel empresarial, simplificadas para emprendedores.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <ShieldCheck size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Simulador de Riesgo</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Anticípate a las crisis. Descubre cuántos meses de cobertura tienes si tus ingresos caen sorpresivamente.</p>
+              </div>
+
+              <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <TrendingUp size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Control de Flujo</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Registra tus gastos e ingresos fácilmente. Observa tu crecimiento en gráficos analíticos avanzados.</p>
+              </div>
+
+              <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <BarChart3 size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Soberanía de Datos</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Importa tu historial desde Excel en segundos, y exporta tus reportes financieros con un solo clic.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECCIÓN DE PRECIOS */}
+        <section id="precios" className="py-24 max-w-5xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Planes simples, sin letras chicas</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-8">Comienza gratis y mejora cuando tu negocio lo necesite.</p>
             
-            {/* Texto y Botones */}
-            <div className="z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-6 border border-blue-100">
-                <CheckCircle size={14} className="text-blue-600" /> Para microemprendedores
+            {/* Toggle Mensual / Anual */}
+            <div className="flex items-center justify-center gap-4">
+              <span className={`text-sm font-semibold ${!anual ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Mensual</span>
+              <button 
+                onClick={() => setAnual(!anual)}
+                className="relative inline-flex h-7 w-14 items-center rounded-full bg-blue-600 dark:bg-purple-600 transition-colors focus:outline-none"
+              >
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${anual ? 'translate-x-8' : 'translate-x-1'}`} />
+              </button>
+              <span className={`text-sm font-semibold flex items-center gap-2 ${anual ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                Anual <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">2 meses gratis</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* PLAN PERSONAL (Azul/Confianza) */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all flex flex-col">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Plan Personal</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Ideal para freelancers y control de finanzas personales.</p>
               </div>
-              <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
-                ¿Cuánto tiempo de vida le queda a tu <span className="text-blue-600 relative inline-block">negocio?<span className="absolute bottom-1 left-0 w-full h-3 bg-blue-100 -z-10 rounded-sm"></span></span>
-              </h1>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                La mayoría de los emprendimientos fallan por falta de caja. CajaClaro te da la respuesta clara y ordenada sin hojas de cálculo complicadas.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Link href="/login" className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30">
-                  Empezar ahora <ArrowRight size={18} />
-                </Link>
-                <button className="w-full sm:w-auto px-6 py-3 bg-white text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                  <PlayCircle size={18} className="text-gray-500" /> Ver demo
-                </button>
+              <div className="mb-8">
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">
+                  ${anual ? '59.900' : '5.990'}
+                </span>
+                <span className="text-slate-500 dark:text-slate-400 font-medium">/ {anual ? 'año' : 'mes'}</span>
+                {anual && <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">Equivale a $4.990 al mes</p>}
               </div>
-              <p className="text-sm text-gray-500 mt-4 flex items-center gap-2">
-                <CheckCircle size={14} className="text-gray-400" /> Sin tarjeta de crédito requerida
-              </p>
+              <ul className="flex flex-col gap-4 mb-8 flex-1">
+                {[
+                  'Control de ingresos y gastos',
+                  'Simulador de riesgo financiero',
+                  'Gráficos analíticos',
+                  'Importación y exportación de Excel',
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+                    <Check size={20} className="text-blue-500 shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/login" className="w-full py-3.5 px-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center font-bold rounded-xl transition-colors">
+                Comenzar con Personal
+              </Link>
             </div>
 
-            {/* Visualización de Tarjetas (Dashboard Mockup) CON ANIMACIÓN HOVER */}
-            <div className="relative group perspective-1000">
-              {/* Fondo decorativo de las tarjetas que reacciona al hover */}
-              <div className="absolute top-4 left-4 right-0 bottom-0 bg-gray-200/50 rounded-3xl -z-10 transform rotate-2 transition-transform duration-500 group-hover:rotate-3 group-hover:translate-x-2 group-hover:translate-y-2"></div>
-              
-              {/* Contenedor principal de las tarjetas */}
-              <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xl relative z-10 transition-all duration-500 transform group-hover:-translate-y-3 group-hover:scale-[1.02] group-hover:shadow-2xl">
-                
-                {/* Tarjeta Principal: Vida Estimada */}
-                <div className="mb-6 p-6 bg-gray-50 rounded-2xl border border-gray-100 transition-colors duration-300 group-hover:bg-blue-50/30">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                      <Clock size={14} /> Vida Estimada (Runway)
-                    </h3>
-                    <TrendingUp size={18} className="text-blue-500" />
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-5xl font-extrabold text-gray-900">8.5</span>
-                    <span className="text-xl text-gray-600 font-medium">meses</span>
-                  </div>
-                  {/* Barra de progreso simulada con animación de carga ligera al hover */}
-                  <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-2 relative">
-                    <div className="h-full bg-blue-500 rounded-full absolute left-0 top-0 transition-all duration-1000 ease-out w-[70%] group-hover:w-[75%]"></div>
-                  </div>
-                  <p className="text-sm text-blue-600 flex items-center gap-1">
-                    <TrendingUp size={14} /> +1.2 meses vs mes pasado
-                  </p>
-                </div>
-
-                {/* Tarjetas Secundarias: Ingresos y Gastos */}
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Ingresos */}
-                  <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 relative overflow-hidden transition-transform duration-500 hover:-translate-y-1 hover:shadow-md">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="p-2 bg-green-100 rounded-lg text-green-600">
-                        <DollarSign size={20} />
-                      </div>
-                      <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full">+12%</span>
-                    </div>
-                    <h4 className="text-sm text-gray-500 mb-1">Ingresos Abril</h4>
-                    <p className="text-2xl font-bold text-gray-900">$4,250.00</p>
-                  </div>
-
-                  {/* Gastos Fijos */}
-                  <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 transition-transform duration-500 hover:-translate-y-1 hover:shadow-md">
-                    <div className="mb-4">
-                      <div className="p-2 bg-red-100 rounded-lg text-red-600 inline-block">
-                        <Receipt size={20} />
-                      </div>
-                    </div>
-                    <h4 className="text-sm text-gray-500 mb-1">Gastos Fijos</h4>
-                    <p className="text-2xl font-bold text-gray-900">$1,120.00</p>
-                    {/* Gráfico de barras simulado */}
-                    <div className="flex items-end gap-1 mt-3 h-6">
-                      <div className="flex-1 bg-red-200 rounded-sm h-2/3 transition-all duration-300 group-hover:h-3/4"></div>
-                      <div className="flex-1 bg-red-200 rounded-sm h-1/2 transition-all duration-300 group-hover:h-3/5 delay-75"></div>
-                      <div className="flex-1 bg-red-100 rounded-sm h-1/3 transition-all duration-300 group-hover:h-2/5 delay-100"></div>
-                      <div className="flex-1 bg-red-500 rounded-sm h-full transition-all duration-300 group-hover:h-[90%] delay-150"></div>
-                      <div className="flex-1 bg-red-200 rounded-sm h-2/5 transition-all duration-300 group-hover:h-1/2 delay-200"></div>
-                    </div>
-                  </div>
-                </div>
+            {/* PLAN EMPRESA (Morado/Premium) */}
+            <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-8 border border-slate-800 relative shadow-2xl shadow-purple-900/20 flex flex-col transform md:-translate-y-4">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                  Recomendado
+                </span>
               </div>
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-white mb-2">Plan Empresa</h3>
+                <p className="text-sm text-slate-400">Para Pymes que buscan automatización total y liquidez proyectada.</p>
+              </div>
+              <div className="mb-8">
+                <span className="text-4xl font-extrabold text-white">
+                  ${anual ? '200.000' : '20.000'}
+                </span>
+                <span className="text-slate-400 font-medium">/ {anual ? 'año' : 'mes'}</span>
+                {anual && <p className="text-sm text-purple-400 mt-2 font-medium">Equivale a $16.666 al mes</p>}
+              </div>
+              <ul className="flex flex-col gap-4 mb-8 flex-1">
+                {[
+                  'Todo lo del Plan Personal',
+                  'Llave API Secreta',
+                  'Automatización con Zapier y Shopify',
+                  'Soporte prioritario 24/7',
+                  'Múltiples negocios (Próximamente)'
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-start gap-3 text-slate-300">
+                    <Check size={20} className="text-purple-500 shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/login" className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl transition-all shadow-lg shadow-purple-600/30">
+                Seleccionar Empresa
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-20 bg-white border-y border-gray-200">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Diseñado para tomar decisiones rápidas</h2>
-              <p className="text-gray-500 max-w-xl mx-auto">No necesitas ser contador. Te damos exactamente los indicadores que determinan si tu negocio sobrevive o quiebra.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-md transition-shadow hover:bg-white hover:border-blue-100 group">
-                <div className="w-12 h-12 bg-white rounded-xl border border-gray-200 flex items-center justify-center mb-6 shadow-sm group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                  <TrendingUp className="text-blue-600" size={24} />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Caja Viva Dinámica</h3>
-                <p className="text-gray-600 leading-relaxed">Olvida los ingresos fijos irreales. Registra tus ventas diarias y ve cómo tu liquidez real y margen operativo se calculan al instante.</p>
-              </div>
-              
-              <div className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-md transition-shadow hover:bg-white hover:border-blue-100 group">
-                <div className="w-12 h-12 bg-white rounded-xl border border-gray-200 flex items-center justify-center mb-6 shadow-sm group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                  <Clock className="text-blue-600" size={24} />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Simulador de Estrés</h3>
-                <p className="text-gray-600 leading-relaxed">¿Qué pasa si caen las reservas un 20%? Activa el simulador y descubre al instante si tu caja aguanta para pagar los costos fijos.</p>
-              </div>
-
-              <div className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-md transition-shadow hover:bg-white hover:border-blue-100 group">
-                <div className="w-12 h-12 bg-white rounded-xl border border-gray-200 flex items-center justify-center mb-6 shadow-sm group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                  <Activity className="text-blue-600" size={24} />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Automatización API</h3>
-                <p className="text-gray-600 leading-relaxed">Conecta tu web de reservas, Shopify o pasarela de pagos. Los ingresos entrarán solos a tu flujo de caja mientras tú duermes.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-  {/* Pricing Section - 3 Planes */}
-        <section className="py-24 bg-gray-50">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Planes diseñados para tu realidad</h2>
-              <p className="text-gray-500">Desde organizar tu sueldo hasta automatizar tu empresa.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-center">
-              
-              {/* Plan Gratis */}
-              <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm flex flex-col hover:border-blue-200 transition-colors h-full">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Prueba</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-bold text-gray-900">$0</span>
-                </div>
-                <p className="text-sm text-gray-500 mb-6">Para explorar la plataforma y ver si es para ti.</p>
-                <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-gray-400" /> Registro manual (límite mensual)</li>
-                  <li className="flex items-center gap-3 text-gray-600"><CheckCircle size={18} className="text-gray-400" /> Simulador básico</li>
-                </ul>
-                <Link href="/login" className="w-full py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors text-center">
-                  Crear cuenta gratis
-                </Link>
-              </div>
-
-              {/* Plan Personal */}
-              <div className="bg-white p-8 rounded-3xl border-2 border-blue-500 shadow-xl flex flex-col relative transform md:-translate-y-4 h-full z-10">
-                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl uppercase tracking-wider">
-                  Más popular
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Personal</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-bold text-gray-900">$5.990</span>
-                  <span className="text-gray-500 font-medium text-sm">CLP/mes</span>
-                </div>
-                <p className="text-sm text-gray-500 mb-6">Para personas que quieren entender en qué se va su plata y empezar a ahorrar.</p>
-                <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Movimientos ilimitados</li>
-                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Gráficos de análisis de gastos</li>
-                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Consejos de ahorro inteligentes</li>
-                  <li className="flex items-center gap-3 text-gray-800"><CheckCircle size={18} className="text-blue-500" /> Importación de cartola (Excel)</li>
-                </ul>
-                <Link href="/login" className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors text-center shadow-lg shadow-blue-600/20">
-                  Comenzar Plan Personal
-                </Link>
-              </div>
-
-              {/* Plan Empresa */}
-              <div className="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-lg flex flex-col h-full">
-                <h3 className="text-xl font-semibold text-white mb-2">Empresa</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-bold text-white">$20.000</span>
-                  <span className="text-gray-400 font-medium text-sm">CLP/mes</span>
-                </div>
-                <p className="text-sm text-gray-400 mb-6">Para negocios y Pymes que necesitan automatizar su flujo de caja.</p>
-                <ul className="space-y-4 mb-8 flex-1">
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> <strong className="text-white">Todo lo del plan Personal</strong></li>
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> API secreta para integraciones</li>
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Conexión con software de reservas</li>
-                  <li className="flex items-center gap-3 text-gray-300"><CheckCircle size={18} className="text-yellow-400" /> Cálculo avanzado de Supervivencia</li>
-                </ul>
-                <Link href="/login" className="w-full py-3 px-4 bg-yellow-400 text-yellow-900 font-bold rounded-xl hover:bg-yellow-500 transition-colors text-center">
-                  Subir a Empresa
-                </Link>
-              </div>
-
-            </div>
-          </div>
-        </section>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-12 text-center">
-        <div className="flex items-center justify-center gap-2 text-gray-900 font-bold text-lg mb-4">
-          <Activity className="text-blue-600" size={20} /> CajaClaro
-        </div>
-        <p className="text-gray-500 text-sm">Finanzas claras para emprendedores reales. © {new Date().getFullYear()}</p>
+      
+      {/* PIE DE PÁGINA */}
+      <footer className="py-8 text-center text-slate-500 dark:text-slate-600 text-sm border-t border-gray-200 dark:border-slate-800">
+        <p>© {new Date().getFullYear()} CajaClaro. Hecho en Chile para emprendedores con visión.</p>
       </footer>
     </div>
-  );
+  )
 }
