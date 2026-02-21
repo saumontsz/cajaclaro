@@ -45,9 +45,10 @@ export async function agregarTransaccion(formData: FormData) {
   const descripcion = formData.get('descripcion') as string
   const negocio_id = formData.get('negocio_id') as string
 
-  // Validación básica
+  // Validación básica: Si hay error, simplemente cancelamos la ejecución (return void)
   if (!monto || monto <= 0 || !descripcion) {
-    return { error: 'Datos inválidos' }
+    console.error('Datos inválidos')
+    return 
   }
 
   const { error } = await supabase.from('transacciones').insert({
@@ -58,11 +59,11 @@ export async function agregarTransaccion(formData: FormData) {
     descripcion
   })
 
+  // Si falla la base de datos, cancelamos la ejecución (return void)
   if (error) {
     console.error("Error guardando transacción:", error)
-    return { error: 'No se pudo guardar la transacción' }
+    return 
   }
-
 
   revalidatePath('/dashboard')
 }
