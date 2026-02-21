@@ -9,7 +9,6 @@ interface Props {
 
 const COLORES = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#64748b'];
 
-// Función para formatear números con puntos (ej: 5000000 -> 5.000.000)
 const formatearDinero = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(valor);
 };
@@ -62,7 +61,6 @@ export default function GraficosFinancieros({ transacciones }: Props) {
         </div>
         <div className="w-full min-h-[300px] flex-1 text-xs">
           <ResponsiveContainer width="100%" height="100%">
-            {/* Margen ajustado para que los números no se corten */}
             <BarChart data={datosBarras} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dy={10} />
@@ -71,12 +69,13 @@ export default function GraficosFinancieros({ transacciones }: Props) {
                 tickLine={false} 
                 tick={{ fill: '#64748b' }} 
                 tickFormatter={(value) => `$${formatearDinero(value)}`}
-                width={70} // Ancho fijo para el eje Y para evitar cortes con números grandes
+                width={70} 
               />
               <Tooltip 
                 cursor={{ fill: '#f8fafc' }}
                 contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                formatter={(value: number) => [`$${formatearDinero(value)}`, '']}
+                /* CORRECCIÓN AQUÍ: value de tipo any */
+                formatter={(value: any) => [`$${formatearDinero(Number(value || 0))}`, '']}
               />
               <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
               <Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -113,7 +112,8 @@ export default function GraficosFinancieros({ transacciones }: Props) {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`$${formatearDinero(value)}`, 'Total']}
+                  /* CORRECCIÓN AQUÍ: value de tipo any */
+                  formatter={(value: any) => [`$${formatearDinero(Number(value || 0))}`, 'Total']}
                 />
                 <Legend 
                   layout="horizontal" 
