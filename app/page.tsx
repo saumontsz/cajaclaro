@@ -1,5 +1,6 @@
 import { Activity, ArrowRight, TrendingUp, Clock, DollarSign, Receipt, PlayCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import ImportadorExcel from './ImportadorExcel'
 
 export default function LandingPage() {
   return (

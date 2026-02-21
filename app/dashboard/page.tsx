@@ -4,6 +4,7 @@ import { crearNegocio, cerrarSesion, agregarTransaccion } from './actions'
 import { Activity, LogOut, Wallet, Calendar, AlertTriangle, ArrowUpCircle, ArrowDownCircle, PlusCircle } from 'lucide-react'
 import Simulador from './Simulador'
 import ApiSettings from './ApiSettings'
+import ImportadorExcel from './ImportadorExcel'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -137,7 +138,7 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Columna Izquierda: Formulario de Transacciones */}
+          {/* Columna Izquierda: Formulario de Transacciones y Excel */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -171,6 +172,10 @@ export default async function DashboardPage() {
                 </button>
               </form>
             </div>
+
+            {/* AQUÍ ESTÁ EL NUEVO COMPONENTE */}
+            <ImportadorExcel negocioId={negocio.id} />
+            
           </div>
 
           {/* Columna Derecha: Historial y Simulador */}

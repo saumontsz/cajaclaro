@@ -76,3 +76,31 @@ export async function agregarTransaccion(formData: FormData) {
 
   revalidatePath('/dashboard')
 }
+export async function importarTransaccionesMasivas(transacciones: any[], negocio_id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'No autorizado' }
+
+  // Preparamos los datos con el ID del usuario y negocio correctos
+  const datosFormateados = transacciones.map(tx => ({
+    negocio_id,
+    user_id: user.id,
+    tipo: String(tx.tipo).toLowerCase() === 'ingreso' ? 'ingreso' : 'gasto',
+    monto: Number(tx.monto),
+    descripcion: String(tx.descripcion),
+    // Si el Excel trae fecha la usamos, si no, usa la fecha de hoy
+    fecha: tx.fecha ? new Date(tx.fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+  }))
+
+  // Insertamos todo de golpe (Bulk Insert)
+  const { error } = await supabase.from('transacciones').insert(datosFormateados)
+
+  if (error) {
+    console.error("Error en importación masiva:", error)
+    return { error: 'Error al guardar los datos en la base de datos' }
+  }
+
+  revalidatePath('/dashboard')
+  return { success: true }
+}
