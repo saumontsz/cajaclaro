@@ -7,6 +7,7 @@ import ApiSettings from './ApiSettings'
 import ImportadorExcel from './ImportadorExcel'
 import OnboardingForm from './OnboardingForm'
 import GraficosFinancieros from './GraficosFinancieros'
+import BotonExportarExcel from './BotonExportarExcel'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -157,8 +158,10 @@ export default async function DashboardPage() {
               
               {/* Mitad Izquierda: Lista de Movimientos */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden h-fit">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                {/* Añadimos flex justify-between items-center para separar el título del botón */}
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Últimos Movimientos</h3>
+                  <BotonExportarExcel transacciones={txs} />
                 </div>
                 <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
                   {txs.length === 0 ? (
