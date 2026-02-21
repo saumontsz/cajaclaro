@@ -9,8 +9,12 @@ export default function SocialLogins() {
   const supabase = createClient()
 
   const handleSocialLogin = async (provider: 'google' | 'apple' | 'azure') => {
-    // Obtenemos la URL base de tu sitio (localhost o tu dominio en Vercel)
-    const baseUrl = window.location.origin
+    
+    const supabase = createClient()
+  if (!supabase) return; // Si no hay cliente, no hacemos nada
+
+  const baseUrl = window.location.origin
+    
     
     // Llamamos a Supabase para que inicie el flujo con el proveedor
     const { error } = await supabase.auth.signInWithOAuth({
