@@ -8,3 +8,14 @@ export interface Negocio {
   gastos_variables: number;
   created_at: string;
 }
+
+export interface Transaccion {
+  id: string;
+  negocio_id: string;
+  user_id: string;
+  tipo: 'ingreso' | 'gasto';
+  monto: number;
+  descripcion: string;
+  fecha: string;
+  created_at: string;
+}

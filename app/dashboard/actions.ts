@@ -34,3 +34,35 @@ export async function cerrarSesion() {
   await supabase.auth.signOut()
   redirect('/login')
 }
+export async function agregarTransaccion(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return redirect('/login')
+
+  const tipo = formData.get('tipo') as 'ingreso' | 'gasto'
+  const monto = Number(formData.get('monto'))
+  const descripcion = formData.get('descripcion') as string
+  const negocio_id = formData.get('negocio_id') as string
+
+  // Validación básica
+  if (!monto || monto <= 0 || !descripcion) {
+    return { error: 'Datos inválidos' }
+  }
+
+  const { error } = await supabase.from('transacciones').insert({
+    negocio_id,
+    user_id: user.id,
+    tipo,
+    monto,
+    descripcion
+  })
+
+  if (error) {
+    console.error("Error guardando transacción:", error)
+    return { error: 'No se pudo guardar la transacción' }
+  }
+
+  // Refrescamos el dashboard para que muestre el nuevo dato al instante
+  revalidatePath('/dashboard')
+}
