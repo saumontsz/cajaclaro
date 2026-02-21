@@ -10,22 +10,31 @@ export async function crearNegocio(formData: FormData) {
 
   if (!user) return redirect('/login')
 
-  const datos = {
-    user_id: user.id,
-    nombre: formData.get('nombre') as string,
-    saldo_actual: Number(formData.get('saldo_actual')),
-    ingresos_mensuales: Number(formData.get('ingresos_mensuales')),
-    gastos_fijos: Number(formData.get('gastos_fijos')),
-    gastos_variables: Number(formData.get('gastos_variables')),
-  }
+  const nombre = formData.get('nombre') as string
+  const saldo_actual = Number(formData.get('saldo_actual'))
+  const ingresos_mensuales = Number(formData.get('ingresos_mensuales'))
+  const gastos_fijos = Number(formData.get('gastos_fijos'))
+  const gastos_variables = Number(formData.get('gastos_variables'))
 
-  const { error } = await supabase.from('negocios').insert(datos)
+  // Validación básica
+  if (!nombre) return 
+
+  const { error } = await supabase.from('negocios').insert({
+    user_id: user.id,
+    nombre,
+    saldo_actual,
+    ingresos_mensuales,
+    gastos_fijos,
+    gastos_variables
+    // Nota: 'plan' y 'api_key' se crearán solos gracias a los DEFAULT que pusimos en SQL
+  })
 
   if (error) {
-    console.error("Error guardando negocio:", error)
-    return
+    console.error("Error guardando el negocio:", error)
+    return 
   }
 
+  // ESTA ES LA LÍNEA MÁGICA QUE FALTABA
   revalidatePath('/dashboard')
 }
 
