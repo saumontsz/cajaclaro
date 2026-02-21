@@ -63,6 +63,6 @@ export async function agregarTransaccion(formData: FormData) {
     return { error: 'No se pudo guardar la transacción' }
   }
 
-  // Refrescamos el dashboard para que muestre el nuevo dato al instante
+
   revalidatePath('/dashboard')
 }
