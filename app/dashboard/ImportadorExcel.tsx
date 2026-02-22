@@ -1,128 +1,105 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
+import { UploadCloud, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { UploadCloud, FileSpreadsheet, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
-import { importarTransaccionesMasivas } from './actions'
+import { importarMasivo } from './actions'
 
 export default function ImportadorExcel({ negocioId }: { negocioId: string }) {
-  const [arrastrando, setArrastrando] = useState(false)
-  const [archivo, setArchivo] = useState<File | null>(null)
-  const [datosPreview, setDatosPreview] = useState<any[]>([])
-  const [cargando, setCargando] = useState(false)
-  const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error', texto: string } | null>(null)
-  
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [estado, setEstado] = useState<'idle' | 'cargando' | 'exito' | 'error'>('idle')
+  const [mensaje, setMensaje] = useState('')
 
-  // Procesar el archivo Excel
-  const procesarArchivo = (file: File) => {
-    setArchivo(file)
-    setMensaje(null)
-    
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result
-        const workbook = XLSX.read(data, { type: 'binary' })
-        const primeraHojaName = workbook.SheetNames[0]
-        const hoja = workbook.Sheets[primeraHojaName]
-        
-        // Convertir la hoja a JSON
-        const json: any[] = XLSX.utils.sheet_to_json(hoja)
-        
-        // Buscar columnas clave (asumimos que el Excel tiene columnas parecidas a: tipo, monto, descripcion)
-        const transaccionesFormateadas = json.map(fila => {
-          // Buscamos las llaves ignorando mayúsculas/minúsculas
-          const keys = Object.keys(fila)
-          const keyTipo = keys.find(k => k.toLowerCase().includes('tipo'))
-          const keyMonto = keys.find(k => k.toLowerCase().includes('monto') || k.toLowerCase().includes('valor'))
-          const keyDesc = keys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('concepto'))
-          
-          return {
-            tipo: keyTipo ? fila[keyTipo] : 'ingreso', // Por defecto ingreso si no especifica
-            monto: keyMonto ? fila[keyMonto] : 0,
-            descripcion: keyDesc ? fila[keyDesc] : 'Importado desde Excel'
-          }
-        }).filter(tx => tx.monto > 0) // Filtramos filas vacías
+  const manejarArchivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-        setDatosPreview(transaccionesFormateadas.slice(0, 3)) // Mostramos solo 3 de ejemplo
-      } catch (error) {
-        setMensaje({ tipo: 'error', texto: 'El archivo no tiene un formato válido.' })
-      }
-    }
-    reader.readAsBinaryString(file)
-  }
+    setEstado('cargando')
+    setMensaje('Procesando archivo...')
 
-  const subirDatos = async () => {
-    if (datosPreview.length === 0) return
-    setCargando(true)
-    
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      const data = e.target?.result
-      const workbook = XLSX.read(data, { type: 'binary' })
-      const json: any[] = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])
-      
-      const transacciones = json.map(fila => {
-        const keys = Object.keys(fila)
-        const keyTipo = keys.find(k => k.toLowerCase().includes('tipo'))
-        const keyMonto = keys.find(k => k.toLowerCase().includes('monto') || k.toLowerCase().includes('valor'))
-        const keyDesc = keys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('concepto'))
-        return {
-          tipo: keyTipo ? fila[keyTipo] : 'ingreso',
-          monto: keyMonto ? fila[keyMonto] : 0,
-          descripcion: keyDesc ? fila[keyDesc] : 'Importación Excel'
+    try {
+      const reader = new FileReader()
+      reader.onload = async (evento) => {
+        try {
+          const data = new Uint8Array(evento.target?.result as ArrayBuffer)
+          const workbook = XLSX.read(data, { type: 'array' })
+          const primeraHoja = workbook.Sheets[workbook.SheetNames[0]]
+          const datosJson = XLSX.utils.sheet_to_json(primeraHoja)
+
+          if (datosJson.length === 0) throw new Error('El archivo está vacío.')
+
+          const resultado = await importarMasivo(negocioId, datosJson)
+
+          if (resultado?.error) throw new Error('Error al guardar en base de datos.')
+
+          setEstado('exito')
+          setMensaje(`¡${datosJson.length} movimientos importados!`)
+          setTimeout(() => setEstado('idle'), 3000)
+
+        } catch (error: any) {
+          setEstado('error')
+          setMensaje(error.message || 'Formato inválido.')
         }
-      }).filter(tx => tx.monto > 0)
-
-      const res = await importarTransaccionesMasivas(transacciones, negocioId)
-      
-      if (res?.error) {
-        setMensaje({ tipo: 'error', texto: res.error })
-      } else {
-        setMensaje({ tipo: 'exito', texto: `¡${transacciones.length} movimientos importados correctamente!` })
-        setArchivo(null)
-        setDatosPreview([])
       }
-      setCargando(false)
+      reader.readAsArrayBuffer(file)
+    } catch (error) {
+      setEstado('error')
+      setMensaje('Error al leer el archivo.')
     }
-    reader.readAsBinaryString(archivo!)
   }
 
   return (
-    // Tarjeta principal oscura
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm mt-8 transition-colors">
-      <div className="flex items-center gap-2 mb-4">
-        <FileSpreadsheet className="text-green-600 dark:text-green-500" size={20} />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Importación Masiva</h3>
+    // CAMBIO 1: Quitamos h-full para que no se estire
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm transition-all flex flex-col">
+      
+      {/* Encabezado más compacto */}
+      <div className="mb-4">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+          <FileSpreadsheet size={18} className="text-emerald-500" /> Importación Masiva
+        </h3>
+        <p className="text-[11px] text-slate-500 leading-tight">
+          Columnas requeridas: <strong className="text-slate-700 dark:text-slate-300">Concepto</strong>, <strong className="text-slate-700 dark:text-slate-300">Monto</strong> y <strong className="text-slate-700 dark:text-slate-300">Tipo</strong>.
+        </p>
       </div>
-      <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
-        Sube un archivo Excel (.xlsx) o CSV. Asegúrate de tener columnas para <strong>"Tipo"</strong>, <strong>"Monto"</strong> y <strong>"Descripcion"</strong>.
-      </p>
 
-      {!archivo && (
-        <div 
-          onDragOver={(e) => { e.preventDefault(); setArrastrando(true) }}
-          onDragLeave={() => setArrastrando(false)}
-          onDrop={(e) => { /* ... lógica drop ... */ }}
-          // Zona de drop oscura
-          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-            arrastrando ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50'
-          }`}
-        >
-          <UploadCloud className="mx-auto text-gray-400 dark:text-slate-500 mb-3" size={32} />
-          <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">Arrastra tu archivo aquí o</p>
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="text-blue-600 dark:text-blue-500 text-sm font-semibold hover:text-blue-700 dark:hover:text-blue-400"
-          >
-            explorar archivos
-          </button>
-          {/* ... input hidden ... */}
-        </div>
-      )}
+      {/* CAMBIO 2: Área de interacción con altura fija (h-52) para que se vea "cuadrada" */}
+      <div className="w-full h-52 mt-2">
+        
+        {estado === 'idle' && (
+          <label className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-all cursor-pointer group px-4 text-center">
+            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition-colors">
+              <UploadCloud size={24} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+            </div>
+            <span className="text-sm font-medium text-slate-900 dark:text-white">Arrastra tu Excel aquí</span>
+            <span className="text-xs text-slate-500 mt-1">o haz clic para buscar (.xlsx)</span>
+            <input type="file" accept=".xlsx, .xls" className="hidden" onChange={manejarArchivo} />
+          </label>
+        )}
 
-      {/* ... (El resto de la vista previa y mensajes también necesita ajustes similares si los usas) ... */}
+        {estado === 'cargando' && (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <Loader2 size={28} className="animate-spin text-emerald-500 mb-3" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 animate-pulse">{mensaje}</span>
+          </div>
+        )}
+
+        {estado === 'exito' && (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 text-center p-4">
+            <CheckCircle2 size={32} className="text-emerald-500 mb-2" />
+            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{mensaje}</span>
+          </div>
+        )}
+
+        {estado === 'error' && (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-900/30 text-center p-4">
+            <AlertCircle size={28} className="text-red-500 mb-2" />
+            <span className="text-sm font-bold text-red-700 dark:text-red-400 mb-1">Hubo un problema</span>
+            <span className="text-xs text-red-600 dark:text-red-300 block max-w-[200px] truncate">{mensaje}</span>
+            <button onClick={() => setEstado('idle')} className="mt-3 text-xs bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-medium hover:bg-red-50 transition-colors">
+              Intentar de nuevo
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,8 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { 
-  Wallet, TrendingUp, TrendingDown, Zap, PlusCircle, 
-  BarChart3, Activity, LogOut, AlertCircle, ArrowUpCircle, Lock
+  TrendingUp, TrendingDown, Activity, LogOut, Lock
 } from 'lucide-react'
 
 import ThemeToggle from './ThemeToggle'
@@ -12,7 +11,8 @@ import ApiSettings from './ApiSettings'
 import ImportadorExcel from './ImportadorExcel'
 import BotonExportarExcel from './BotonExportarExcel'
 import Simulador from './Simulador'
-import { cerrarSesion, agregarTransaccion } from './actions'
+import NuevoMovimientoForm from './NuevoMovimientoForm'
+import { cerrarSesion } from './actions'
 import OnboardingFlow from './OnboardingFlow'
 import FeatureLock from './FeatureLock'
 
@@ -25,6 +25,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // 1. Obtenemos el negocio
   const { data: negocio } = await supabase
     .from('negocios')
     .select('*')
@@ -39,12 +40,21 @@ export default async function DashboardPage() {
     )
   }
 
+  // 2. Obtenemos las transacciones
   const { data: transacciones } = await supabase
     .from('transacciones')
     .select('*')
     .eq('negocio_id', negocio.id)
     .order('created_at', { ascending: false })
 
+  // 3. Obtenemos los proyectos/hitos guardados
+  const { data: hitos } = await supabase
+    .from('hitos')
+    .select('*')
+    .eq('negocio_id', negocio.id)
+    .order('created_at', { ascending: false })
+
+  // Cálculos matemáticos de la caja
   const txs = transacciones || [];
   const ingresosReales = txs.filter(t => t.tipo === 'ingreso').reduce((sum, t) => sum + Number(t.monto), 0);
   const gastosReales = txs.filter(t => t.tipo === 'gasto').reduce((sum, t) => sum + Number(t.monto), 0);
@@ -57,16 +67,14 @@ export default async function DashboardPage() {
     : Infinity;
 
   // LÓGICA MAESTRA DE PLANES
-  // Si no hay plan registrado, por defecto es 'gratis'
   const planActual = (negocio.plan || 'gratis').toLowerCase();
-  
-  // Variables booleanas para hacer los candados más limpios
-  const esPremium = planActual !== 'gratis'; // Lo tienen Personal Pro y Empresa Pro
-  const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual); // SOLO para empresas
+  const esPremium = planActual !== 'gratis'; // Personal Pro y Empresa Pro
+  const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual); // Solo Empresa Pro
 
   return (
     <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
       
+      {/* HEADER TÉCNICO */}
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
           <Activity className="text-blue-600" size={20} />
@@ -86,7 +94,7 @@ export default async function DashboardPage() {
 
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         
-        {/* KPIs */}
+        {/* KPIs SUPERIORES */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
             <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Caja Disponible</p>
@@ -123,38 +131,27 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* ESTRUCTURA PRINCIPAL DEL DASHBOARD */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* NUEVO MOVIMIENTO */}
+          {/* COLUMNA IZQUIERDA: Nuevo Movimiento Inteligente */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm sticky top-24">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <PlusCircle size={18} className="text-blue-600" /> Nuevo Movimiento
-              </h3>
-              <form action={agregarTransaccion} className="flex flex-col gap-4">
-                <input type="hidden" name="negocio_id" value={negocio.id} />
-                <select name="tipo" className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="ingreso">Ingreso</option>
-                  <option value="gasto">Gasto</option>
-                </select>
-                <input name="monto" type="number" placeholder="Monto ($)" required className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
-                <input name="descripcion" type="text" placeholder="Concepto" required className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
-                <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95">Guardar</button>
-              </form>
-            </div>
+            <NuevoMovimientoForm negocioId={negocio.id} />
           </div>
 
+          {/* COLUMNA DERECHA: Gráficos y Herramientas */}
           <div className="lg:col-span-3 space-y-8">
+            
             <GraficosFinancieros transacciones={txs} />
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               
-              {/* HISTORIAL */}
+              {/* HISTORIAL Y EXPORTACIÓN */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden h-fit">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">Historial</h3>
                   
-                  {/* CANDADO: Exportar a Excel (Requiere Premium) */}
+                  {/* Candado de Exportación */}
                   {esPremium ? (
                     <BotonExportarExcel transacciones={txs} />
                   ) : (
@@ -184,49 +181,37 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              {/* COLUMNA HERRAMIENTAS PREMIUM */}
+              {/* HERRAMIENTAS PREMIUM (Proyecciones, Excel, API) */}
               <div className="space-y-8">
                 
-                {/* CANDADO: Proyecciones (Premium o Empresa) */}
                 {esPremium ? (
-                  <ProyeccionHitos saldoInicial={cajaViva} />
-                ) : (
-                  <FeatureLock 
-                    titulo="Proyecciones de Inversión" 
-                    descripcion="Simula compras grandes y analiza matemáticamente cómo impactarán tu liquidez." 
-                    planRequerido="Personal" 
+                  <ProyeccionHitos 
+                    saldoInicial={cajaViva} 
+                    negocioId={negocio.id} 
+                    hitosGuardados={hitos || []} 
                   />
+                ) : (
+                  <FeatureLock titulo="Proyecciones de Inversión" descripcion="Simula compras grandes y analiza matemáticamente cómo impactarán tu liquidez." planRequerido="Personal" />
                 )}
 
-                {/* CANDADO: Importación Masiva (SOLO Empresa) */}
                 {esPlanEmpresa ? (
                   <ImportadorExcel negocioId={negocio.id} />
                 ) : (
-                  <FeatureLock 
-                    titulo="Importación Masiva" 
-                    descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." 
-                    planRequerido="Negocio" 
-                  />
+                  <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Negocio" />
                 )}
                 
-                {/* SIMULADOR (Gancho Gratuito) */}
+                {/* Gancho gratuito */}
                 <Simulador negocio={negocio} />
                 
-                {/* CANDADO: Configuración API (SOLO Empresa) */}
                 {esPlanEmpresa ? (
-                  <ApiSettings plan={planActual} apiKey={negocio.api_key} />
+                  <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
                 ) : (
-                  <FeatureLock 
-                    titulo="Acceso API y Webhooks" 
-                    descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." 
-                    planRequerido="Negocio" 
-                  />
+                  <FeatureLock titulo="Acceso API y Webhooks" descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." planRequerido="Negocio" />
                 )}
 
               </div>
             </div>
           </div>
-
         </div>
       </main>
     </div>

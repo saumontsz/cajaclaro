@@ -27,7 +27,6 @@ export default async function PlanesPage() {
     { nombre: "Simulador de Proyecciones e Hitos", gratis: false, personal: true, empresa: true },
     { nombre: "Importación Masiva desde Excel", gratis: false, personal: false, empresa: true },
     { nombre: "Acceso API y Webhooks", gratis: false, personal: false, empresa: true },
-    { nombre: "Soporte", gratis: "Comunitario", personal: "Email 48hrs", empresa: "Prioritario 24/7" },
   ]
 
   return (

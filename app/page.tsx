@@ -171,7 +171,6 @@ export default function LandingPage() {
                   'Todo lo del Plan Personal',
                   'Llave API Secreta',
                   'Automatización con Zapier y Shopify',
-                  'Soporte prioritario 24/7',
                   'Múltiples negocios (Próximamente)'
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-300">
