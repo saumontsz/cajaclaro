@@ -2,7 +2,12 @@
 
 import { User, Briefcase } from 'lucide-react'
 
-export default function UserTypeSelection() {
+// Definimos qué recibe este componente (la función para cambiar de paso)
+interface Props {
+  onSelect: (tipo: 'personal' | 'negocio') => void;
+}
+
+export default function UserTypeSelection({ onSelect }: Props) {
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className="text-center mb-10">
@@ -12,7 +17,10 @@ export default function UserTypeSelection() {
 
       <div className="grid gap-4">
         {/* Opción Personal */}
-        <button className="w-full flex items-center gap-4 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-500 dark:hover:border-blue-500 transition-all text-left group">
+        <button 
+          onClick={() => onSelect('personal')}
+          className="w-full flex items-center gap-4 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-500 dark:hover:border-blue-500 transition-all text-left group"
+        >
           <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
             <User size={28} />
           </div>
@@ -23,7 +31,10 @@ export default function UserTypeSelection() {
         </button>
 
         {/* Opción Negocio */}
-        <button className="w-full flex items-center gap-4 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-yellow-500 dark:hover:border-yellow-500 transition-all text-left group">
+        <button 
+          onClick={() => onSelect('negocio')}
+          className="w-full flex items-center gap-4 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-yellow-500 dark:hover:border-yellow-500 transition-all text-left group"
+        >
           <div className="p-4 rounded-2xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-500 group-hover:scale-110 transition-transform">
             <Briefcase size={28} />
           </div>

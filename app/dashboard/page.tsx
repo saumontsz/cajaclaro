@@ -14,6 +14,7 @@ import ImportadorExcel from './ImportadorExcel'
 import BotonExportarExcel from './BotonExportarExcel'
 import Simulador from './Simulador'
 import { cerrarSesion, agregarTransaccion } from './actions'
+import OnboardingFlow from './OnboardingFlow'
 
 const formatoCLP = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(Math.round(valor));
