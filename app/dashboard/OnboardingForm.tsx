@@ -1,84 +1,70 @@
 'use client'
 
-import { crearNegocio } from './actions'
-import { Building2, Wallet, TrendingUp, Receipt, ArrowRight, ChevronLeft } from 'lucide-react'
+import { useState } from 'react'
+import { crearNegocio } from './actions' // Importamos tu action perfecta
+import { AlertCircle, Building2 } from 'lucide-react'
 
-// 1. Le decimos a TypeScript qué datos esperar
-interface Props {
-  tipoPerfil: 'personal' | 'negocio';
-  onBack: () => void;
-}
+export default function OnboardingForm({ tipoPerfil = 'empresa' }: { tipoPerfil?: string }) {
+  const [errorUI, setErrorUI] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false)
 
-// 2. Extraemos las variables tipoPerfil y onBack
-export default function OnboardingForm({ tipoPerfil, onBack }: Props) {
-  const inputClasses = "w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all";
-  const labelClasses = "block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5";
+  // ESTA FUNCIÓN ES EL "TRADUCTOR" QUE ARREGLA EL ERROR
+  // No tiene un 'return', por lo tanto para TypeScript devuelve 'void'.
+  const manejarEnvio = async (formData: FormData) => {
+    setErrorUI(null)
+    setIsPending(true)
+
+    // Llamamos a la función de actions.ts
+    const resultado = await crearNegocio(formData)
+
+    // Si hubo un error, lo guardamos en el estado de la interfaz
+    if (resultado?.error) {
+      setErrorUI(resultado.error)
+      setIsPending(false)
+    }
+    // Si sale bien, el redirect('/') que tienes en actions.ts hará el resto.
+  }
 
   return (
-    <div className="w-full max-w-lg mx-auto p-4">
-      {/* 3. Conectamos la función onBack al botón */}
-      <button 
-        type="button" 
-        onClick={onBack}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mb-8 transition-colors"
-      >
-        <ChevronLeft size={20} />
-        <span className="text-sm font-medium">Volver</span>
-      </button>
-
-      <div className="mb-8">
-        {/* Un pequeño detalle dinámico según lo que eligió */}
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          {tipoPerfil === 'negocio' ? 'Datos de tu Negocio' : 'Tus Finanzas Personales'}
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">Ingresa aproximados, podrás ajustarlo después.</p>
+    <div className="max-w-md w-full bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-xl">
+      
+      <div className="text-center mb-8">
+        <div className="bg-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Building2 className="text-white" size={24} />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">Bienvenido a Flujent</h2>
       </div>
 
-      <form action={crearNegocio} className="space-y-6">
+      {/* Mostramos el error si existe */}
+      {errorUI && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2">
+          <AlertCircle size={16} />
+          {errorUI}
+        </div>
+      )}
+
+      {/* CLAVE: Usamos 'manejarEnvio' (que es void) y NO 'crearNegocio' directamente */}
+      <form action={manejarEnvio} className="space-y-6">
         <input type="hidden" name="tipo_perfil" value={tipoPerfil} />
-        {/* Nombre de la cuenta */}
-        <div>
-          <label className={labelClasses}>
-            {tipoPerfil === 'negocio' ? '¿Cómo se llama tu negocio o proyecto?' : '¿Cómo llamarás a esta cuenta?'}
-          </label>
-          <input 
-            name="nombre" 
-            type="text" 
-            required 
-            placeholder={tipoPerfil === 'negocio' ? "Ej: Canchas Huilo Huilo" : "Ej: Finanzas Personales"} 
-            className={inputClasses} 
-          />
-        </div>
 
-        {/* Plata disponible */}
-        <div>
-          <label className={labelClasses}>¿Cuánta plata tienes hoy disponible? ($)</label>
-          <input name="saldo_actual" type="number" required placeholder="0" className={inputClasses} />
-        </div>
-
-        {/* Ingreso Mensual */}
-        <div>
-          <label className={labelClasses}>¿Cuál es tu ingreso mensual (Sueldo, Ventas, etc.)? ($)</label>
-          <input name="ingresos_mensuales" type="number" required placeholder="0" className={inputClasses} />
-        </div>
-
-        {/* Gastos Fijos y Extras */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
-            <label className={labelClasses}>Gastos Fijos ($)</label>
-            <input name="gastos_fijos" type="number" required placeholder="Arriendo, Luz..." className={inputClasses} />
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Nombre del Negocio</label>
+            <input name="nombre" type="text" required placeholder="Ej: Canchas Huilo Huilo" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white" />
           </div>
-          <div>
-            <label className={labelClasses}>Gastos Extras ($)</label>
-            <input name="gastos_variables" type="number" required placeholder="Salidas, Otros..." className={inputClasses} />
+
+          <div className="grid grid-cols-2 gap-4">
+            <input name="saldo_actual" type="number" placeholder="Saldo Inicial" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500" />
+            <input name="ingresos_mensuales" type="number" placeholder="Ingresos Est." required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
 
         <button 
           type="submit" 
-          className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group active:scale-[0.98]"
+          disabled={isPending}
+          className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg transition-all active:scale-95 disabled:opacity-50"
         >
-          Finalizar y Entrar <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          {isPending ? "Configurando..." : "Finalizar Configuración"}
         </button>
       </form>
     </div>
