@@ -15,7 +15,7 @@ import BotonExportarExcel from './BotonExportarExcel'
 import Simulador from './Simulador'
 import NuevoMovimientoForm from './NuevoMovimientoForm'
 import { cerrarSesion } from './actions'
-import OnboardingFlow from './OnboardingFlow'
+import OnboardingFlow from './OnboardingForm'
 import FeatureLock from './FeatureLock'
 
 const formatoCLP = (valor: number) => {
