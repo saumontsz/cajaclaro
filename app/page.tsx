@@ -156,7 +156,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-white mb-2">Plan Empresa</h3>
+                <h3 className="text-xl font-bold text-white mb-2">Plan Negocio</h3>
                 <p className="text-sm text-slate-400">Para Pymes que buscan automatización total y liquidez proyectada.</p>
               </div>
               <div className="mb-8">

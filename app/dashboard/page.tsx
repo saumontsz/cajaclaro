@@ -196,7 +196,7 @@ export default async function DashboardPage() {
                 {esPlanEmpresa ? (
                   <ImportadorExcel negocioId={negocio.id} />
                 ) : (
-                  <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Negocio" />
+                  <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Empresa" />
                 )}
                 
                 <Simulador negocio={negocio} />

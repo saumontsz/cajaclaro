@@ -79,7 +79,7 @@ export default function ProyeccionHitos({ saldoInicial, negocioId, hitosGuardado
               <PlusCircle size={12}/> Nuevo
             </button>
           )}
-          <span className="text-[10px] font-bold uppercase bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-1 rounded-lg">Pro</span>
+          <span className="text-[10px] font-bold uppercase bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-1 rounded-lg">Empresa</span>
         </div>
       </div>
 
