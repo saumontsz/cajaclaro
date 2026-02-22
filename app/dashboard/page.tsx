@@ -204,7 +204,7 @@ export default async function DashboardPage() {
                 {esPlanEmpresa ? (
                   <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
                 ) : (
-                  <FeatureLock titulo="Acceso API y Webhooks" descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." planRequerido="Negocio" />
+                  <FeatureLock titulo="Acceso API y Webhooks" descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." planRequerido="Empresa" />
                 )}
               </div>
             </div>
