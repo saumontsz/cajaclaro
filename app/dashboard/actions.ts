@@ -27,7 +27,7 @@ export async function crearNegocio(formData: FormData) {
     saldo_actual,
     ingresos_mensuales,
     gastos_fijos,
-    gastos_variables
+    gastos_variables,
   })
 
   if (error) {
