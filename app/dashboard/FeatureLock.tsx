@@ -4,7 +4,7 @@ import Link from 'next/link'
 interface Props {
   titulo: string;
   descripcion: string;
-  planRequerido: 'Personal' | 'Negocio';
+  planRequerido: 'Personal' | 'Empresa';
 }
 
 export default function FeatureLock({ titulo, descripcion, planRequerido }: Props) {
