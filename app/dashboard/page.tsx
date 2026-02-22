@@ -33,10 +33,9 @@ export default async function DashboardPage() {
 
   if (!negocio) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-800 w-full max-w-md">
-          <OnboardingForm />
-        </div>
+      <main className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-slate-950 transition-colors">
+        {/* AQUÍ ESTÁ LA MAGIA: Llamamos al Flow, no al Form directo */}
+        <OnboardingFlow /> 
       </main>
     )
   }
