@@ -2,11 +2,10 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { 
   Wallet, TrendingUp, TrendingDown, Zap, PlusCircle, 
-  BarChart3, Activity, LogOut, AlertCircle, ArrowUpCircle
+  BarChart3, Activity, LogOut, AlertCircle, ArrowUpCircle, Lock
 } from 'lucide-react'
 
 import ThemeToggle from './ThemeToggle'
-import OnboardingForm from './OnboardingForm'
 import ProyeccionHitos from './ProyeccionHitos'
 import GraficosFinancieros from './GraficosFinancieros'
 import ApiSettings from './ApiSettings'
@@ -15,6 +14,7 @@ import BotonExportarExcel from './BotonExportarExcel'
 import Simulador from './Simulador'
 import { cerrarSesion, agregarTransaccion } from './actions'
 import OnboardingFlow from './OnboardingFlow'
+import FeatureLock from './FeatureLock'
 
 const formatoCLP = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(Math.round(valor));
@@ -34,7 +34,6 @@ export default async function DashboardPage() {
   if (!negocio) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-slate-950 transition-colors">
-        {/* AQUÍ ESTÁ LA MAGIA: Llamamos al Flow, no al Form directo */}
         <OnboardingFlow /> 
       </main>
     )
@@ -56,6 +55,14 @@ export default async function DashboardPage() {
   const diasVida = flujoNetoMensual < 0 
     ? Math.floor(cajaViva / (Math.abs(flujoNetoMensual) / 30)) 
     : Infinity;
+
+  // LÓGICA MAESTRA DE PLANES
+  // Si no hay plan registrado, por defecto es 'gratis'
+  const planActual = (negocio.plan || 'gratis').toLowerCase();
+  
+  // Variables booleanas para hacer los candados más limpios
+  const esPremium = planActual !== 'gratis'; // Lo tienen Personal Pro y Empresa Pro
+  const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual); // SOLO para empresas
 
   return (
     <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
@@ -79,7 +86,7 @@ export default async function DashboardPage() {
 
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         
-        {/* KPIs CORREGIDOS: AHORA SON 4 COLUMNAS */}
+        {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
             <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Caja Disponible</p>
@@ -118,9 +125,9 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
+          {/* NUEVO MOVIMIENTO */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm sticky top-24">
-              {/* TEXTO CORREGIDO: text-gray-900 dark:text-white */}
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <PlusCircle size={18} className="text-blue-600" /> Nuevo Movimiento
               </h3>
@@ -141,10 +148,20 @@ export default async function DashboardPage() {
             <GraficosFinancieros transacciones={txs} />
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              
+              {/* HISTORIAL */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden h-fit">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">Historial</h3>
-                  <BotonExportarExcel transacciones={txs} />
+                  
+                  {/* CANDADO: Exportar a Excel (Requiere Premium) */}
+                  {esPremium ? (
+                    <BotonExportarExcel transacciones={txs} />
+                  ) : (
+                    <button disabled className="text-xs flex items-center gap-1.5 font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg cursor-not-allowed border border-transparent">
+                      <Lock size={12} /> Exportar
+                    </button>
+                  )}
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[400px] overflow-y-auto">
                   {txs.map((tx: any) => (
@@ -167,11 +184,45 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
+              {/* COLUMNA HERRAMIENTAS PREMIUM */}
               <div className="space-y-8">
-                <ProyeccionHitos saldoInicial={cajaViva} />
-                <ImportadorExcel negocioId={negocio.id} />
+                
+                {/* CANDADO: Proyecciones (Premium o Empresa) */}
+                {esPremium ? (
+                  <ProyeccionHitos saldoInicial={cajaViva} />
+                ) : (
+                  <FeatureLock 
+                    titulo="Proyecciones de Inversión" 
+                    descripcion="Simula compras grandes y analiza matemáticamente cómo impactarán tu liquidez." 
+                    planRequerido="Personal" 
+                  />
+                )}
+
+                {/* CANDADO: Importación Masiva (SOLO Empresa) */}
+                {esPlanEmpresa ? (
+                  <ImportadorExcel negocioId={negocio.id} />
+                ) : (
+                  <FeatureLock 
+                    titulo="Importación Masiva" 
+                    descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." 
+                    planRequerido="Negocio" 
+                  />
+                )}
+                
+                {/* SIMULADOR (Gancho Gratuito) */}
                 <Simulador negocio={negocio} />
-                <ApiSettings plan={negocio.plan} apiKey={negocio.api_key} />
+                
+                {/* CANDADO: Configuración API (SOLO Empresa) */}
+                {esPlanEmpresa ? (
+                  <ApiSettings plan={planActual} apiKey={negocio.api_key} />
+                ) : (
+                  <FeatureLock 
+                    titulo="Acceso API y Webhooks" 
+                    descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." 
+                    planRequerido="Negocio" 
+                  />
+                )}
+
               </div>
             </div>
           </div>

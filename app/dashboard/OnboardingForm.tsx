@@ -35,6 +35,7 @@ export default function OnboardingForm({ tipoPerfil, onBack }: Props) {
       </div>
 
       <form action={crearNegocio} className="space-y-6">
+        <input type="hidden" name="tipo_perfil" value={tipoPerfil} />
         {/* Nombre de la cuenta */}
         <div>
           <label className={labelClasses}>

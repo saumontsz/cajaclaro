@@ -40,22 +40,22 @@ export default function SocialLogins() {
         <span>Continuar con Google</span>
       </button>
       
-      {/* Activamos Apple */}
+      {/* Activamos Apple 
       <button onClick={() => handleSocialLogin('apple')} type="button" className={buttonClasses}>
         <FaApple size={22} className="text-white" />
         <span>Continuar con Apple</span>
-      </button>
+      </button>*/}
 
-      {/* Activamos Microsoft (Azure) */}
+      {/* Activamos Microsoft (Azure) 
       <button onClick={() => handleSocialLogin('azure')} type="button" className={buttonClasses}>
         <FaMicrosoft size={20} className="text-blue-400" />
         <span>Continuar con Microsoft</span>
-      </button>
+      </button>*/}
       
-      <button onClick={() => alert('Próximamente: Login con SMS')} type="button" className={buttonClasses}>
+      {/*<button onClick={() => alert('Próximamente: Login con SMS')} type="button" className={buttonClasses}>
         <MdPhoneIphone size={22} className="text-slate-300" />
         <span>Continuar con el teléfono</span>
-      </button>
+      </button>*/}
     </div>
   )
 }
