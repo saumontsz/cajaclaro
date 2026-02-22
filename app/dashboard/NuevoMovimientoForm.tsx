@@ -1,8 +1,13 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { PlusCircle, CheckCircle2 } from 'lucide-react'
+import { PlusCircle, CheckCircle2, Tag } from 'lucide-react'
 import { agregarTransaccion } from './actions'
+
+const CATEGORIAS = [
+  "Ventas", "Servicios", "Arriendo", "Sueldos", "Marketing", 
+  "Insumos", "Mantenimiento", "Impuestos", "Software", "Otros"
+]
 
 const formatoMiles = (valorStr: string) => {
   if (!valorStr) return '';
@@ -21,14 +26,9 @@ export default function NuevoMovimientoForm({ negocioId }: { negocioId: string }
   }
 
   const manejarSubmit = async (formData: FormData) => {
-    // 1. Ejecutamos la acción en la base de datos
     await agregarTransaccion(formData);
-    
-    // 2. Limpiamos el formulario para el siguiente registro
     setMonto('');
     formRef.current?.reset();
-    
-    // 3. Mostramos el mensaje de éxito temporal
     setExito(true);
     setTimeout(() => setExito(false), 3000);
   }
@@ -39,25 +39,28 @@ export default function NuevoMovimientoForm({ negocioId }: { negocioId: string }
         <PlusCircle size={18} className="text-blue-600" /> Nuevo Movimiento
       </h3>
 
-      {/* ALERTA DE ÉXITO */}
       {exito && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold border border-emerald-100 dark:border-emerald-800/30 animate-in fade-in slide-in-from-top-2">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold border border-emerald-100 dark:border-emerald-800/30">
           <CheckCircle2 size={18} />
           <span>¡Guardado con éxito!</span>
         </div>
       )}
 
       <form ref={formRef} action={manejarSubmit} className="flex flex-col gap-4">
-        {/* Datos ocultos que necesita la base de datos */}
         <input type="hidden" name="negocio_id" value={negocioId} />
-        <input type="hidden" name="monto" value={monto} /> {/* Este guarda el número real "15000" */}
+        <input type="hidden" name="monto" value={monto} />
 
-        <select name="tipo" className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="ingreso">Ingreso</option>
-          <option value="gasto">Gasto</option>
-        </select>
+        <div className="grid grid-cols-2 gap-2">
+          <select name="tipo" className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="ingreso">Ingreso</option>
+            <option value="gasto">Gasto</option>
+          </select>
+          
+          <select name="categoria" className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+            {CATEGORIAS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+        </div>
         
-        {/* Input visible con el separador de miles "15.000" */}
         <input 
           type="text" 
           placeholder="Monto ($)" 
@@ -67,7 +70,7 @@ export default function NuevoMovimientoForm({ negocioId }: { negocioId: string }
           className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" 
         />
         
-        <input name="descripcion" type="text" placeholder="Concepto" required className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+        <input name="descripcion" type="text" placeholder="Concepto (ej: Pago Luz)" required className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         
         <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95">Guardar</button>
       </form>

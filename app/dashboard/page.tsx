@@ -4,9 +4,11 @@ import {
   TrendingUp, TrendingDown, Activity, LogOut, Lock
 } from 'lucide-react'
 
+// IMPORTACIONES DE COMPONENTES
 import ThemeToggle from './ThemeToggle'
 import ProyeccionHitos from './ProyeccionHitos'
 import GraficosFinancieros from './GraficosFinancieros'
+import GraficoCategorias from './GraficoCategorias' // <--- ESTA FALTABA
 import ApiSettings from './ApiSettings'
 import ImportadorExcel from './ImportadorExcel'
 import BotonExportarExcel from './BotonExportarExcel'
@@ -68,13 +70,13 @@ export default async function DashboardPage() {
 
   // LÓGICA MAESTRA DE PLANES
   const planActual = (negocio.plan || 'gratis').toLowerCase();
-  const esPremium = planActual !== 'gratis'; // Personal Pro y Empresa Pro
-  const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual); // Solo Empresa Pro
+  const esPremium = planActual !== 'gratis'; 
+  const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual);
 
   return (
     <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
       
-      {/* HEADER TÉCNICO */}
+      {/* HEADER */}
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
           <Activity className="text-blue-600" size={20} />
@@ -94,7 +96,7 @@ export default async function DashboardPage() {
 
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         
-        {/* KPIs SUPERIORES */}
+        {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
             <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Caja Disponible</p>
@@ -131,27 +133,26 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ESTRUCTURA PRINCIPAL DEL DASHBOARD */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* COLUMNA IZQUIERDA: Nuevo Movimiento Inteligente */}
           <div className="lg:col-span-1">
             <NuevoMovimientoForm negocioId={negocio.id} />
           </div>
 
-          {/* COLUMNA DERECHA: Gráficos y Herramientas */}
           <div className="lg:col-span-3 space-y-8">
             
             <GraficosFinancieros transacciones={txs} />
 
+            {/* GRÁFICO DE CATEGORÍAS (Exclusivo Empresa) */}
+            {esPlanEmpresa && (
+              <GraficoCategorias transacciones={txs} />
+            )}
+
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               
-              {/* HISTORIAL Y EXPORTACIÓN */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden h-fit">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">Historial</h3>
-                  
-                  {/* Candado de Exportación */}
                   {esPremium ? (
                     <BotonExportarExcel transacciones={txs} />
                   ) : (
@@ -181,9 +182,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              {/* HERRAMIENTAS PREMIUM (Proyecciones, Excel, API) */}
               <div className="space-y-8">
-                
                 {esPremium ? (
                   <ProyeccionHitos 
                     saldoInicial={cajaViva} 
@@ -200,7 +199,6 @@ export default async function DashboardPage() {
                   <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Negocio" />
                 )}
                 
-                {/* Gancho gratuito */}
                 <Simulador negocio={negocio} />
                 
                 {esPlanEmpresa ? (
@@ -208,7 +206,6 @@ export default async function DashboardPage() {
                 ) : (
                   <FeatureLock titulo="Acceso API y Webhooks" descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." planRequerido="Negocio" />
                 )}
-
               </div>
             </div>
           </div>
