@@ -161,10 +161,10 @@ export default function LandingPage() {
               </div>
               <div className="mb-8">
                 <span className="text-4xl font-extrabold text-white">
-                  ${anual ? '200.000' : '20.000'}
+                  ${anual ? '199.900' : '19.990'}
                 </span>
                 <span className="text-slate-400 font-medium">/ {anual ? 'año' : 'mes'}</span>
-                {anual && <p className="text-sm text-purple-400 mt-2 font-medium">Equivale a $16.666 al mes</p>}
+                {anual && <p className="text-sm text-purple-400 mt-2 font-medium">Equivale a $16.658 al mes</p>}
               </div>
               <ul className="flex flex-col gap-4 mb-8 flex-1">
                 {[

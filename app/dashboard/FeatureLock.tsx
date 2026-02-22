@@ -1,4 +1,5 @@
 import { Lock, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 
 interface Props {
   titulo: string;
@@ -20,9 +21,14 @@ export default function FeatureLock({ titulo, descripcion, planRequerido }: Prop
         <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[240px] mb-6 leading-relaxed">
           {descripcion}
         </p>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+        
+        {/* AQUÍ ESTÁ EL CAMBIO: Ahora es un Link hacia /dashboard/planes */}
+        <Link 
+          href="/dashboard/planes" 
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+        >
           <Sparkles size={16} /> Mejorar a {planRequerido}
-        </button>
+        </Link>
       </div>
     </div>
   )
