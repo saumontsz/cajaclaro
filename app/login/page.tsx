@@ -1,12 +1,21 @@
 import { createClient } from '../../utils/supabase/server'
 import { redirect } from 'next/navigation'
-// AQUÍ ESTÁ LA CORRECCIÓN: Usamos los nombres reales del backend
 import { login, signup } from './actions' 
 import { Activity, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import SocialLogins from './SocialLogins'
 
-export default async function LoginPage({ searchParams }: { searchParams: { message: string, error?: string } }) {
+// Definimos la interfaz para los parámetros asíncronos
+interface PageProps {
+  searchParams: Promise<{ message?: string; error?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: PageProps) {
+  // 1. "Desenvolvemos" la promesa de searchParams
+  const params = await searchParams;
+  const message = params?.message;
+  const isError = params?.error;
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -57,21 +66,20 @@ export default async function LoginPage({ searchParams }: { searchParams: { mess
               />
             </div>
 
-            {searchParams?.message && (
+            {/* Mostramos el mensaje solo si existe el parámetro message */}
+            {message && (
               <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
-                searchParams.error ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                isError ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
               }`}>
                 <AlertCircle size={16} className="shrink-0" />
-                <span>{searchParams.message}</span>
+                <span>{message}</span>
               </div>
             )}
             
             <div className="flex flex-col gap-3 mt-2">
-              {/* AQUÍ ESTÁ LA CORRECCIÓN: formAction={login} */}
               <button formAction={login} className="w-full px-4 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">
                 Iniciar sesión
               </button>
-              {/* AQUÍ ESTÁ LA CORRECCIÓN: formAction={signup} */}
               <button formAction={signup} className="w-full px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-xl transition-all border border-slate-700 active:scale-[0.98]">
                 Crear cuenta nueva
               </button>
