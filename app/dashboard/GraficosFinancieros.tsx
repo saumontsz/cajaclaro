@@ -13,12 +13,32 @@ const formatearDinero = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(valor);
 };
 
+// Estilo de Tooltip profesional y legible
+const tooltipEstiloPro = {
+  contentStyle: { 
+    backgroundColor: '#fff', 
+    borderRadius: '16px', 
+    border: 'none', 
+    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+    padding: '12px'
+  },
+  labelStyle: { 
+    color: '#64748b', 
+    fontWeight: 'bold', 
+    marginBottom: '4px' 
+  },
+  itemStyle: { 
+    color: '#0f172a', // Color oscuro intenso para los números
+    fontSize: '14px', 
+    fontWeight: '800' 
+  }
+};
+
 export default function GraficosFinancieros({ transacciones }: Props) {
   if (!transacciones || transacciones.length === 0) {
     return null; 
   }
 
-  // ... (la lógica de procesamiento de datos sigue igual) ...
   const datosBarras = transacciones.reduce((acc: any[], tx) => {
     const fecha = new Date(tx.created_at).toLocaleDateString('es-CL', { month: 'short', day: 'numeric' });
     const existente = acc.find(item => item.fecha === fecha);
@@ -42,26 +62,24 @@ export default function GraficosFinancieros({ transacciones }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       
-      {/* Tarjeta Gráfico de Barras Oscura */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
+      {/* Tarjeta Gráfico de Barras */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
         <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
           <BarChart3 className="text-blue-600 dark:text-blue-500" size={20} />
-          <h3 className="font-semibold text-lg">Flujo Diario</h3>
+          <h3 className="font-bold text-lg tracking-tight">Flujo Diario</h3>
         </div>
         <div className="w-full min-h-[300px] flex-1 text-xs">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={datosBarras} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-              {/* Rejilla más sutil en modo oscuro */}
-              <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.2} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
               <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} tickFormatter={(value) => `$${formatearDinero(value)}`} width={70} />
+              <YAxis hide />
               <Tooltip 
-                cursor={{ fill: 'rgba(255,255,255,0.1)' }}
-                /* Tooltip oscuro con borde sutil */
-                contentStyle={{ backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155', color: '#f8fafc', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)' }}
+                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                {...tooltipEstiloPro}
                 formatter={(value: any) => [`$${formatearDinero(Number(value || 0))}`, '']}
               />
-              <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', color: '#94a3b8' }} />
+              <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
               <Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
               <Bar dataKey="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
             </BarChart>
@@ -69,11 +87,11 @@ export default function GraficosFinancieros({ transacciones }: Props) {
         </div>
       </div>
 
-      {/* Tarjeta Gráfico de Torta Oscura */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
+      {/* Tarjeta Gráfico de Torta (CORREGIDO) */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
         <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
-          <PieChartIcon className="text-blue-600 dark:text-blue-500" size={20} />
-          <h3 className="font-semibold text-lg">Distribución de Gastos</h3>
+          <PieChartIcon className="text-purple-600 dark:text-purple-500" size={20} />
+          <h3 className="font-bold text-lg tracking-tight">Distribución de Gastos</h3>
         </div>
         
         {datosTorta.length > 0 ? (
@@ -86,16 +104,16 @@ export default function GraficosFinancieros({ transacciones }: Props) {
                   ))}
                 </Pie>
                 <Tooltip 
-                  /* Tooltip oscuro */
-                  contentStyle={{ backgroundColor: '#1e293b', borderRadius: '12px', border: '1px solid #334155', color: '#f8fafc', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)' }}
+                  // Aplicamos el estilo de alto contraste
+                  {...tooltipEstiloPro}
                   formatter={(value: any) => [`$${formatearDinero(Number(value || 0))}`, 'Total']}
                 />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ paddingTop: '20px', color: '#94a3b8' }} />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="min-h-[300px] flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm flex-1 border-2 border-dashed border-gray-100 dark:border-slate-800 rounded-xl transition-colors">
+          <div className="min-h-[300px] flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm flex-1 border-2 border-dashed border-gray-100 dark:border-slate-800 rounded-3xl">
             Registra tu primer gasto para ver el análisis.
           </div>
         )}

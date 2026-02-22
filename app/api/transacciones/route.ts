@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     // 2. Inicializar Supabase con privilegios de servidor (Service Role)
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPaABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
