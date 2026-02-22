@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 /**
- * GESTIÓN DE NEGOCIOS
+ * 1. GESTIÓN DE NEGOCIOS (Onboarding)
  */
 export async function crearNegocio(formData: FormData) {
   const supabase = await createClient()
@@ -28,14 +28,17 @@ export async function crearNegocio(formData: FormData) {
     ingresos_mensuales,
     gastos_fijos,
     gastos_variables,
+    plan: 'gratis' // Plan inicial por defecto
   })
 
   if (error) {
     console.error("Error guardando el negocio:", error)
-    return { error: error.message }
+    return { error: "No se pudo crear el negocio: " + error.message }
   }
 
+  // Refrescamos y mandamos al dashboard
   revalidatePath('/dashboard')
+  redirect('/dashboard')
 }
 
 export async function cerrarSesion() {
@@ -45,7 +48,7 @@ export async function cerrarSesion() {
 }
 
 /**
- * GESTIÓN DE TRANSACCIONES
+ * 2. GESTIÓN DE TRANSACCIONES (Manual)
  */
 export async function agregarTransaccion(formData: FormData) {
   const supabase = await createClient()
@@ -57,12 +60,10 @@ export async function agregarTransaccion(formData: FormData) {
   const monto = Number(formData.get('monto'))
   const descripcion = formData.get('descripcion') as string
   const negocio_id = formData.get('negocio_id') as string
-  
-  // FIX: Extraemos la categoría del formData (si no viene, por defecto es 'Otros')
   const categoria = (formData.get('categoria') as string) || 'Otros'
 
   if (!monto || monto <= 0 || !descripcion) {
-    return { error: 'Datos inválidos' }
+    return { error: 'Datos inválidos. Por favor revisa el monto y la descripción.' }
   }
 
   const { error } = await supabase.from('transacciones').insert({
@@ -71,7 +72,7 @@ export async function agregarTransaccion(formData: FormData) {
     tipo,
     monto,
     descripcion,
-    categoria, // Ahora sí está definida
+    categoria,
   })
 
   if (error) {
@@ -84,13 +85,14 @@ export async function agregarTransaccion(formData: FormData) {
 }
 
 /**
- * IMPORTACIÓN INTELIGENTE (EXCEL)
+ * 3. IMPORTACIÓN MASIVA (Excel)
  */
 export async function importarMasivo(negocioId: string, datosExcel: any[]) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Usuario no autenticado' };
 
+  // Mapeo inteligente para detectar columnas de cualquier Excel
   const transaccionesLimpias = datosExcel.map((fila) => {
     let concepto = 'Sin descripción';
     let monto = 0;
@@ -113,14 +115,14 @@ export async function importarMasivo(negocioId: string, datosExcel: any[]) {
       descripcion: concepto,
       monto: Math.abs(monto || 0),
       tipo: tipoStr.includes('gasto') || tipoStr.includes('egreso') ? 'gasto' : 'ingreso',
-      categoria: 'Otros' // Por defecto en importaciones masivas
+      categoria: 'Otros'
     };
   });
 
   const { error } = await supabase.from('transacciones').insert(transaccionesLimpias);
 
   if (error) {
-    console.error("Error importando:", error);
+    console.error("Error en importación masiva:", error);
     return { error: error.message };
   }
 
@@ -129,7 +131,7 @@ export async function importarMasivo(negocioId: string, datosExcel: any[]) {
 }
 
 /**
- * GESTIÓN DE HITOS / PROYECTOS
+ * 4. GESTIÓN DE HITOS (Proyectos de inversión)
  */
 export async function guardarHito(negocioId: string, nombre: string, costo: number, ahorro: number) {
   const supabase = await createClient();
@@ -146,6 +148,7 @@ export async function guardarHito(negocioId: string, nombre: string, costo: numb
 
   if (error) return { error: error.message };
   revalidatePath('/dashboard');
+  return { success: true };
 }
 
 export async function borrarHito(id: string) {
@@ -154,10 +157,11 @@ export async function borrarHito(id: string) {
   
   if (error) return { error: error.message };
   revalidatePath('/dashboard');
+  return { success: true };
 }
 
 /**
- * CONFIGURACIÓN API
+ * 5. CONFIGURACIÓN API (Plan Empresa)
  */
 export async function generarApiKey(negocioId: string) {
   const supabase = await createClient();
@@ -175,4 +179,5 @@ export async function generarApiKey(negocioId: string) {
 
   if (error) return { error: error.message };
   revalidatePath('/dashboard');
+  return { success: true };
 }
