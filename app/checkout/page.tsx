@@ -44,7 +44,18 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
     redirect('/login')
   }
 
-  // 2. Procesamiento de parámetros de la URL
+  // 2. Obtención del ID del Negocio (Vital para el Webhook)
+  const { data: negocio } = await supabase
+    .from('negocios')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!negocio) {
+    redirect('/dashboard') // Si no hay negocio, no puede pagar un plan
+  }
+
+  // 3. Procesamiento de parámetros de la URL
   const params = await searchParams;
   const planDestino = params?.plan as 'personal' | 'empresa';
   const cicloDestino = params?.ciclo as 'mensual' | 'anual';
@@ -135,10 +146,11 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
                 </p>
               </div>
 
-              {/* FORMULARIO DE ACCIÓN DE MERCADO PAGO */}
+              {/* FORMULARIO DE ACCIÓN DE MERCADO PAGO ACTUALIZADO */}
               <form action={async () => {
                 'use server'
-                await crearPagoMP(planDestino, cicloDestino, precioFinal);
+                // Ahora enviamos 4 argumentos, incluyendo negocio.id
+                await crearPagoMP(planDestino, cicloDestino, precioFinal, negocio.id);
               }}>
                 <button 
                   type="submit"
