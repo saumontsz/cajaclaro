@@ -23,6 +23,7 @@ export default function LandingPage() {
             <Link href="/login" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
               Iniciar Sesión
             </Link>
+            {/* Este botón mandará a /dashboard/planes después del login porque no lleva parámetros */}
             <Link href="/login" className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-md shadow-blue-500/20 active:scale-95">
               Comenzar Gratis
             </Link>
@@ -117,7 +118,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* PLAN PERSONAL (Azul/Confianza) */}
+            {/* PLAN PERSONAL (Azul) */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all flex flex-col">
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Plan Personal</h3>
@@ -143,12 +144,13 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/login" className="w-full py-3.5 px-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center font-bold rounded-xl transition-colors">
+              {/* Actualizado con parámetros de ciclo dinámicos */}
+              <Link href={`/login?plan=personal&ciclo=${anual ? 'anual' : 'mensual'}`} className="w-full py-3.5 px-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center font-bold rounded-xl transition-colors">
                 Comenzar con Personal
               </Link>
             </div>
 
-            {/* PLAN EMPRESA (Morado/Premium) */}
+            {/* PLAN EMPRESA (Púrpura) */}
             <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-8 border border-slate-800 relative shadow-2xl shadow-purple-900/20 flex flex-col transform md:-translate-y-4">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
@@ -156,7 +158,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-white mb-2">Plan Negocio</h3>
+                <h3 className="text-xl font-bold text-white mb-2">Plan Empresa</h3>
                 <p className="text-sm text-slate-400">Para Pymes que buscan automatización total y liquidez proyectada.</p>
               </div>
               <div className="mb-8">
@@ -179,7 +181,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/login" className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl transition-all shadow-lg shadow-purple-600/30">
+              {/* Actualizado con parámetros de ciclo dinámicos */}
+              <Link href={`/login?plan=empresa&ciclo=${anual ? 'anual' : 'mensual'}`} className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl transition-all shadow-lg shadow-purple-600/30">
                 Seleccionar Empresa
               </Link>
             </div>

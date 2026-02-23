@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Key, Copy, CheckCircle2, RefreshCw, Eye, EyeOff, Webhook, Loader2 } from 'lucide-react'
+import { Key, Copy, CheckCircle2, RefreshCw, Eye, EyeOff, Webhook, Loader2, Blocks, Clock, Check } from 'lucide-react'
 import { generarApiKey } from './actions'
 
 interface ApiSettingsProps {
@@ -47,7 +47,7 @@ export default function ApiSettings({ plan, apiKey, negocioId }: ApiSettingsProp
       </div>
 
       <p className="text-[11px] text-slate-500 mb-6 leading-relaxed">
-        Usa tu clave API para conectar <strong className="text-slate-700 dark:text-slate-300">Flujent</strong> con otras plataformas (ej: tu sistema de reservas o Zapier) y automatizar el registro de ingresos y gastos.
+        Usa tu clave API estándar (JSON) para inyectar transacciones a tu cuenta desde software de terceros.
       </p>
 
       {/* ZONA DE LA LLAVE */}
@@ -58,7 +58,6 @@ export default function ApiSettings({ plan, apiKey, negocioId }: ApiSettingsProp
         
         {apiKey ? (
           <div className="space-y-4">
-            {/* Input simulado con Fix de desbordamiento */}
             <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 shadow-sm">
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-slate-800 dark:text-slate-200 truncate pr-2">
@@ -74,7 +73,6 @@ export default function ApiSettings({ plan, apiKey, negocioId }: ApiSettingsProp
               </button>
             </div>
 
-            {/* Botones de acción ajustados para móvil */}
             <div className="flex gap-2">
               <button 
                 onClick={copiarAlPortapapeles}
@@ -116,9 +114,41 @@ export default function ApiSettings({ plan, apiKey, negocioId }: ApiSettingsProp
       <div className="mt-5 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl text-[10px] text-amber-800 dark:text-amber-500 leading-relaxed">
         <div className="flex gap-2">
           <span className="font-bold shrink-0">Atención:</span>
-          <p>Esta clave da acceso total para escribir en la base de datos de tu negocio. Nunca la compartas ni la expongas en código frontend público.</p>
+          <p>Esta clave da acceso para escribir en tu base de datos. Nunca la expongas en código frontend público.</p>
         </div>
       </div>
+
+      {/* NUEVA SECCIÓN: CAPACIDADES Y PRÓXIMAMENTE */}
+      <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
+        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Estado de Integraciones</h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Tarjeta: Funciona Hoy */}
+          <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+            <h5 className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+              <Check size={14} /> Compatible ahora
+            </h5>
+            <ul className="text-[10px] text-emerald-600/90 dark:text-emerald-500/80 space-y-1.5 ml-1">
+              <li>• Automatizaciones con Zapier o Make</li>
+              <li>• Páginas de reservas propias</li>
+              <li>• Softwares de punto de venta (vía webhook)</li>
+            </ul>
+          </div>
+
+          {/* Tarjeta: Próximamente */}
+          <div className="bg-blue-50/30 dark:bg-blue-900/10 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-800/30 border-dashed">
+            <h5 className="text-[11px] font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-1.5">
+              <Clock size={14} /> Adaptadores nativos
+            </h5>
+            <p className="text-[10px] text-blue-600/80 dark:text-blue-500/70 mb-2">Próximamente conexión en 1 clic sin usar código para:</p>
+            <ul className="text-[10px] text-blue-600/90 dark:text-blue-500/80 space-y-1.5 ml-1 font-medium">
+              <li>• Transbank / Webpay Plus</li>
+              <li>• Mercado Pago (Maquinitas POS)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
