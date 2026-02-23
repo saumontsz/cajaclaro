@@ -1,7 +1,5 @@
 // app/checkout/webpay-actions.ts
 'use server'
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cajaclaro.vercel.app';
-const returnUrl = `${baseUrl}/api/webpay/commit?plan=${plan}`;
 
 import { WebpayPlus, Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } from 'transbank-sdk';
 
@@ -12,10 +10,11 @@ const tx = new WebpayPlus.Transaction(
 
 export async function iniciarPagoWebpay(plan: string, ciclo: string, monto: number, negocioId: string) {
   const buyOrder = `ORD-${Math.floor(Math.random() * 1000000)}`; // Orden aleatoria única
-  const sessionId = negocioId; // Guardamos el ID del negocio aquí para identificarlo después
+  const sessionId = negocioId; // Guardamos el ID del negocio
   
-  // A dónde nos devolverá Transbank después de pagar
-  const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/webpay/commit?plan=${plan}`;
+  // EL BLINDAJE VA AQUÍ ADENTRO: Donde 'plan' sí existe y tiene el valor que eligió el usuario
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cajaclaro.vercel.app';
+  const returnUrl = `${baseUrl}/api/webpay/commit?plan=${plan}`;
 
   try {
     const response = await tx.create(buyOrder, sessionId, monto, returnUrl);
