@@ -5,17 +5,17 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
-  // Transbank nos envía el token_ws de vuelta por POST
-  const formData = await request.formData();
-  const token = formData.get('token_ws');
+// Cambiamos POST por GET porque Transbank envió los datos en la URL
+export async function GET(request: Request) {
+  const url = new URL(request.url);
   
-  // Obtenemos el plan de la URL (lo pasamos en el paso 2)
-  const urlParams = new URL(request.url);
-  const planPagado = urlParams.searchParams.get('plan') || 'personal';
+  // Extraemos los datos de la URL
+  const token = url.searchParams.get('token_ws');
+  const tbkToken = url.searchParams.get('TBK_TOKEN'); // Esto llega si el usuario presiona "Anular"
+  const planPagado = url.searchParams.get('plan') || 'personal';
 
-  // Si el usuario cancela en la pantalla de Webpay, vuelve sin token
-  if (!token) {
+  // Si el usuario canceló el pago, Transbank manda TBK_TOKEN en vez de token_ws
+  if (!token || tbkToken) {
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/planes?error=pago_cancelado`);
   }
 
@@ -24,11 +24,11 @@ export async function POST(request: Request) {
   );
 
   try {
-    // Confirmamos la transacción con Transbank (Obligatorio, o el dinero se devuelve)
-    const response = await tx.commit(token as string);
+    // Confirmamos la transacción (Obligatorio)
+    const response = await tx.commit(token);
 
     if (response.status === 'AUTHORIZED') {
-      const negocioId = response.session_id; // ¡Aquí recuperamos el ID del negocio!
+      const negocioId = response.session_id;
 
       // Actualizamos Supabase
       const supabase = createClient(
@@ -38,7 +38,6 @@ export async function POST(request: Request) {
 
       await supabase.from('negocios').update({ plan: planPagado }).eq('id', negocioId);
 
-      // Redirigimos al Dashboard con éxito
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?pago=exitoso_webpay`);
     } else {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/planes?error=pago_rechazado`);
