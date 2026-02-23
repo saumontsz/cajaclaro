@@ -1,5 +1,7 @@
 // app/checkout/webpay-actions.ts
 'use server'
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://cajaclaro.vercel.app';
+const returnUrl = `${baseUrl}/api/webpay/commit?plan=${plan}`;
 
 import { WebpayPlus, Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } from 'transbank-sdk';
 
