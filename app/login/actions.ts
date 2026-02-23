@@ -21,10 +21,10 @@ export async function login(
     return redirect(`/login?error=Credenciales incorrectas`)
   }
 
-  // 1. Buscamos si el usuario ya tiene un negocio con un plan activo
   const { data: { user } } = await supabase.auth.getUser();
   
   if (user) {
+    // 1. Buscamos el negocio del usuario
     const { data: negocio } = await supabase
       .from('negocios')
       .select('plan')
@@ -33,19 +33,19 @@ export async function login(
 
     const planActivo = (negocio?.plan || '').toLowerCase();
 
-    // ESCENARIO A: Ya es un cliente pagado -> Al Dashboard
-    if (planActivo === 'empresa' || planActivo === 'personal') {
-      redirect('/dashboard');
+    // ESCENARIO A: Si ya es cliente pagado -> Siempre al Dashboard
+    if (planActivo === 'empresa' || planActivo === 'personal' || planActivo === 'pyme') {
+      return redirect('/dashboard');
     }
 
-    // ESCENARIO B: No ha pagado, pero cliqueó un plan en la Landing Page
+    // ESCENARIO B: Si eligió un plan en la Landing Page
+    // Lo mandamos a la tabla de comparación (pasando los params para que la tabla sepa qué resaltar)
     if (planDestino && cicloDestino) {
-      redirect(`/checkout?plan=${planDestino}&ciclo=${cicloDestino}`);
+      return redirect(`/dashboard/planes?plan=${planDestino}&ciclo=${cicloDestino}`);
     }
 
-    // ESCENARIO C: No ha pagado y le dio a "Comenzar Gratis" (sin elegir plan)
-    // CORRECCIÓN: La ruta correcta es /dashboard/planes
-    redirect('/dashboard/planes'); 
+    // ESCENARIO C: Login normal (sin intención previa de compra)
+    return redirect('/dashboard');
   }
 }
 
@@ -67,11 +67,11 @@ export async function signup(
     return redirect(`/login?error=${encodeURIComponent(error.message)}`)
   }
 
-  // En el registro (signup), el flujo es idéntico:
+  // En el registro aplicamos la misma lógica:
+  // Si trae un plan desde la Landing, a la tabla de precios. Si no, al Dashboard.
   if (planDestino && cicloDestino) {
-    redirect(`/checkout?plan=${planDestino}&ciclo=${cicloDestino}`)
+    return redirect(`/dashboard/planes?plan=${planDestino}&ciclo=${cicloDestino}`)
   } else {
-    // CORRECCIÓN: La ruta correcta es /dashboard/planes
-    redirect('/dashboard/planes') 
+    return redirect('/dashboard') 
   }
 }
