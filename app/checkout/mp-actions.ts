@@ -8,15 +8,23 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN || '' 
 });
 
-export async function crearPagoMP(plan: string, ciclo: string, monto: number) {
+/**
+ * Crea la preferencia de pago en Mercado Pago.
+ * @param plan - 'personal' o 'empresa'
+ * @param ciclo - 'mensual' o 'anual'
+ * @param monto - El valor a cobrar
+ * @param negocioId - El ID del negocio en Supabase para identificar al pagador
+ */
+export async function crearPagoMP(plan: string, ciclo: string, monto: number, negocioId: string) {
   const preference = new Preference(client);
   
-  // 1. Creamos una variable para guardar la URL
   let urlARedirigir = '';
 
   try {
     const response = await preference.create({
       body: {
+        // Enlazamos el pago con el ID del negocio en tu DB
+        external_reference: negocioId, 
         items: [
           {
             id: `${plan}-${ciclo}`,
@@ -31,11 +39,12 @@ export async function crearPagoMP(plan: string, ciclo: string, monto: number) {
           failure: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/planes?error=pago_fallido`,
         },
         auto_return: 'approved',
+        // URL donde Mercado Pago avisará que el pago se completó
+        notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
       }
     });
 
     if (response.init_point) {
-      // 2. En lugar de redirigir aquí, guardamos la URL
       urlARedirigir = response.init_point;
     }
   } catch (error: any) {
@@ -43,7 +52,7 @@ export async function crearPagoMP(plan: string, ciclo: string, monto: number) {
     throw new Error('No se pudo generar el cobro.');
   }
 
-  // 3. Redirigimos FUERA del bloque try/catch
+  // Redirigimos fuera del catch para evitar el error NEXT_REDIRECT de Next.js
   if (urlARedirigir) {
     redirect(urlARedirigir);
   }
