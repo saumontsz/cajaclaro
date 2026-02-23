@@ -1,11 +1,14 @@
+import { createServerClient } from '@supabase/ssr'
+// ESTA ES LA LÍNEA QUE FALTA:
+import { cookies } from 'next/headers' 
+
 export async function createClient() {
   const cookieStore = await cookies()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Si faltan las llaves (común durante el build), lanzamos un error descriptivo
-  // o manejamos el caso para que no rompa la ejecución estática
+  // Validación de seguridad para que el build no falle si no detecta las llaves
   if (!supabaseUrl || !supabaseKey) {
     throw new Error('Supabase environment variables are missing')
   }
@@ -15,13 +18,17 @@ export async function createClient() {
     supabaseKey,
     {
       cookies: {
-        getAll() { return cookieStore.getAll() },
+        getAll() {
+          return cookieStore.getAll()
+        },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch { /* Ignorado en componentes estáticos */ }
+          } catch {
+            // Se ignora si se llama desde un Server Component estático
+          }
         },
       },
     }
