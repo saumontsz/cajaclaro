@@ -1,4 +1,3 @@
-// app/login/actions.ts
 'use server'
 
 import { createClient } from '../../utils/supabase/server'
@@ -45,7 +44,8 @@ export async function login(
     }
 
     // ESCENARIO C: No ha pagado y le dio a "Comenzar Gratis" (sin elegir plan)
-    redirect('/login/planes'); // <--- AQUÍ LO MANDAMOS A TU CARPETA DE PLANES
+    // CORRECCIÓN: La ruta correcta es /dashboard/planes
+    redirect('/dashboard/planes'); 
   }
 }
 
@@ -71,6 +71,7 @@ export async function signup(
   if (planDestino && cicloDestino) {
     redirect(`/checkout?plan=${planDestino}&ciclo=${cicloDestino}`)
   } else {
-    redirect('/login/planes') // Lo mandamos a comparar planes
+    // CORRECCIÓN: La ruta correcta es /dashboard/planes
+    redirect('/dashboard/planes') 
   }
 }
