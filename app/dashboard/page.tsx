@@ -9,7 +9,7 @@ import {
 import ThemeToggle from './ThemeToggle'
 import ProyeccionHitos from './ProyeccionHitos'
 import GraficosFinancieros from './GraficosFinancieros'
-import GraficoCategorias from './GraficoCategorias' // <--- ESTA FALTABA
+import GraficoCategorias from './GraficoCategorias' 
 import ApiSettings from './ApiSettings'
 import ImportadorExcel from './ImportadorExcel'
 import BotonExportarExcel from './BotonExportarExcel'
@@ -18,6 +18,17 @@ import NuevoMovimientoForm from './NuevoMovimientoForm'
 import { cerrarSesion } from './actions'
 import OnboardingFlow from './OnboardingForm'
 import FeatureLock from './FeatureLock'
+
+// 1. DEFINICIÓN DE INTERFAZ PARA TYPESCRIPT
+// Esto elimina el error "Parameter 't' implicitly has an 'any' type"
+interface Transaccion {
+  id: string;
+  tipo: 'ingreso' | 'gasto' | string;
+  monto: number | string;
+  descripcion: string;
+  created_at: string;
+  categoria?: string;
+}
 
 const formatoCLP = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(Math.round(valor));
@@ -43,7 +54,7 @@ export default async function DashboardPage() {
     )
   }
 
-  // 2. Obtenemos las transacciones
+  // 2. Obtenemos las transacciones (Forzamos el tipo Transaccion[])
   const { data: transacciones } = await supabase
     .from('transacciones')
     .select('*')
@@ -57,10 +68,17 @@ export default async function DashboardPage() {
     .eq('negocio_id', negocio.id)
     .order('created_at', { ascending: false })
 
-  // Cálculos matemáticos de la caja
-  const txs = transacciones || [];
-  const ingresosReales = txs.filter(t => t.tipo === 'ingreso').reduce((sum, t) => sum + Number(t.monto), 0);
-  const gastosReales = txs.filter(t => t.tipo === 'gasto').reduce((sum, t) => sum + Number(t.monto), 0);
+  // --- CÁLCULOS MATEMÁTICOS CORREGIDOS CON TIPADO ---
+  const txs: Transaccion[] = transacciones || [];
+  
+  const ingresosReales = txs
+    .filter((t: Transaccion) => t.tipo === 'ingreso')
+    .reduce((sum: number, t: Transaccion) => sum + Number(t.monto), 0);
+
+  const gastosReales = txs
+    .filter((t: Transaccion) => t.tipo === 'gasto')
+    .reduce((sum: number, t: Transaccion) => sum + Number(t.monto), 0);
+
   const cajaViva = Number(negocio.saldo_actual) + ingresosReales - gastosReales;
   
   const gastosMensualesEstimados = (negocio.gastos_fijos || 0) + (negocio.gastos_variables || 0);
@@ -142,11 +160,16 @@ export default async function DashboardPage() {
 
           <div className="lg:col-span-3 space-y-8">
             
-            <GraficosFinancieros transacciones={txs} />
+            {/* Contenedor del Gráfico con Altura Fija para evitar errores de Recharts */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm min-h-[400px]">
+               <GraficosFinancieros transacciones={txs} />
+            </div>
 
             {/* GRÁFICO DE CATEGORÍAS (Exclusivo Empresa) */}
             {esPlanEmpresa && (
-              <GraficoCategorias transacciones={txs} />
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm min-h-[350px]">
+                <GraficoCategorias transacciones={txs} />
+              </div>
             )}
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -175,7 +198,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <span className={`font-bold ${tx.tipo === 'ingreso' ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
-                        ${formatoCLP(tx.monto)}
+                        ${formatoCLP(Number(tx.monto))}
                       </span>
                     </div>
                   ))}
