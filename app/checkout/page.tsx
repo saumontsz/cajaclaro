@@ -2,7 +2,9 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { ShieldCheck, CheckCircle2, Zap, ArrowLeft, CreditCard } from 'lucide-react'
 import Link from 'next/link'
-import { crearPagoMP } from './mp-actions'
+
+// IMPORTANTE: Aquí importamos el nuevo botón de Webpay que creaste
+import BotonWebpay from './BotonWebpay'
 
 // Configuración de precios de Flujent
 const PRECIOS = {
@@ -44,7 +46,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
     redirect('/login')
   }
 
-  // 2. Obtención del ID del Negocio (Vital para el Webhook)
+  // 2. Obtención del ID del Negocio (Vital para Transbank)
   const { data: negocio } = await supabase
     .from('negocios')
     .select('id')
@@ -52,7 +54,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
     .single()
 
   if (!negocio) {
-    redirect('/dashboard') // Si no hay negocio, no puede pagar un plan
+    redirect('/dashboard') 
   }
 
   // 3. Procesamiento de parámetros de la URL
@@ -60,7 +62,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
   const planDestino = params?.plan as 'personal' | 'empresa';
   const cicloDestino = params?.ciclo as 'mensual' | 'anual';
 
-  // Si no hay parámetros válidos, devolvemos a la comparación de planes
+  // Si no hay parámetros válidos, devolvemos a la comparación
   if (!planDestino || !PRECIOS[planDestino] || !cicloDestino) {
     redirect('/dashboard/planes')
   }
@@ -72,7 +74,6 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
     <main className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col items-center py-12 px-4 transition-colors duration-300">
       
       <div className="w-full max-w-4xl">
-        {/* BOTÓN DE RETORNO A PLANES */}
         <Link 
           href="/dashboard/planes" 
           className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-8 text-sm font-bold uppercase tracking-wider"
@@ -135,37 +136,30 @@ export default async function CheckoutPage({ searchParams }: CheckoutProps) {
             )}
           </div>
 
-          {/* COLUMNA DERECHA: MÉTODO DE PAGO (MERCADO PAGO) */}
+          {/* COLUMNA DERECHA: MÉTODO DE PAGO (WEBPAY) */}
           <div className="sticky top-24">
-            <div className="bg-slate-900 dark:bg-slate-950 rounded-[2.5rem] p-10 border border-slate-800 shadow-2xl shadow-blue-900/20">
+            <div className="bg-slate-900 dark:bg-slate-950 rounded-[2.5rem] p-10 border border-slate-800 shadow-2xl shadow-rose-900/10">
               
               <div className="flex items-center gap-4 mb-10 text-slate-300 bg-slate-800/50 p-5 rounded-3xl border border-slate-700/50">
-                <ShieldCheck size={28} className="text-blue-400 shrink-0" />
+                <ShieldCheck size={28} className="text-rose-400 shrink-0" />
                 <p className="text-[11px] leading-relaxed font-medium">
-                  Tu pago será procesado de forma segura a través de Mercado Pago. Compatible con Webpay, tarjetas de débito y crédito.
+                  Tu pago será procesado de forma segura a través de Webpay Plus. Transacción respaldada por Transbank.
                 </p>
               </div>
 
-              {/* FORMULARIO DE ACCIÓN DE MERCADO PAGO ACTUALIZADO */}
-              <form action={async () => {
-                'use server'
-                // Ahora enviamos 4 argumentos, incluyendo negocio.id
-                await crearPagoMP(planDestino, cicloDestino, precioFinal, negocio.id);
-              }}>
-                <button 
-                  type="submit"
-                  className="w-full py-5 px-6 bg-blue-600 hover:bg-blue-500 text-white text-lg font-black rounded-2xl transition-all shadow-xl shadow-blue-600/20 flex justify-center items-center gap-3 group active:scale-[0.98]"
-                >
-                  Pagar con Mercado Pago 
-                  <CreditCard size={20} className="group-hover:scale-110 transition-transform" />
-                </button>
-              </form>
+              {/* AQUÍ ESTÁ EL COMPONENTE DE WEBPAY */}
+              <BotonWebpay 
+                plan={planDestino} 
+                ciclo={cicloDestino} 
+                monto={precioFinal} 
+                negocioId={negocio.id} 
+              />
               
               <div className="mt-8 flex flex-col gap-4">
                 <div className="flex items-center justify-center gap-6 opacity-40 grayscale hover:grayscale-0 transition-all cursor-default">
-                   <span className="text-[10px] font-bold text-white tracking-widest uppercase italic">Webpay</span>
-                   <span className="text-[10px] font-bold text-white tracking-widest uppercase">Visa</span>
-                   <span className="text-[10px] font-bold text-white tracking-widest uppercase">Mastercard</span>
+                   <span className="text-[10px] font-bold text-white tracking-widest uppercase italic">Webpay Plus</span>
+                   <span className="text-[10px] font-bold text-white tracking-widest uppercase">Visa / Mastercard</span>
+                   <span className="text-[10px] font-bold text-white tracking-widest uppercase">Redcompra</span>
                 </div>
                 <p className="text-[9px] text-center text-slate-500 font-bold uppercase tracking-[0.1em]">
                   Transacción encriptada de punto a punto.
