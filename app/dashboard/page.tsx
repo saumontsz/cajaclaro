@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link' // <--- IMPORTANTE: Importamos Link
+import Link from 'next/link'
 import { 
-  TrendingUp, TrendingDown, Activity, LogOut, Lock, LayoutDashboard, Settings // <--- IMPORTANTE: Importamos Settings
+  TrendingUp, TrendingDown, Activity, LogOut, Lock, LayoutDashboard, Settings 
 } from 'lucide-react'
 
 // IMPORTACIONES DE COMPONENTES
@@ -95,21 +95,22 @@ export default async function DashboardPage() {
     <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
       
       {/* HEADER */}
-      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 sticky top-0 z-50 shadow-sm">
+      {/* Ajusté el px-4 para móviles y px-6 para escritorio */}
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 md:px-6 py-4 sticky top-0 z-50 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center w-full">
           <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
             <div className="bg-blue-600 p-1.5 rounded-lg">
               <LayoutDashboard className="text-white" size={18} />
             </div>
             <span className="text-xl font-bold tracking-tight">Flujent</span>
-            <span className="text-gray-300 dark:text-slate-700 px-2">/</span>
-            <span className="text-gray-600 dark:text-slate-400 font-normal">{negocio.nombre}</span>
+            {/* Ocultamos el nombre del negocio en móviles muy pequeños si es necesario, o lo dejamos */}
+            <span className="text-gray-300 dark:text-slate-700 px-2 hidden sm:inline">/</span>
+            <span className="text-gray-600 dark:text-slate-400 font-normal hidden sm:inline">{negocio.nombre}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <ThemeToggle />
             
-            {/* --- AQUÍ ESTÁ EL NUEVO BOTÓN DE CONFIGURACIÓN --- */}
             <Link 
               href="/dashboard/configuracion" 
               className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800 rounded-lg transition-all"
@@ -117,7 +118,6 @@ export default async function DashboardPage() {
             >
               <Settings size={20} />
             </Link>
-            {/* ------------------------------------------------ */}
 
             <form action={cerrarSesion}>
               <button type="submit" className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 transition-colors font-medium p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg">
@@ -128,7 +128,9 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full space-y-6">
+      {/* MAIN CONTENT */}
+      {/* Reduje p-6 a p-4 en móviles para ganar espacio lateral */}
+      <main className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full space-y-6">
         
         {/* SECCIÓN 1: KPIs (Fila Superior) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -165,7 +167,10 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           
           {/* COLUMNA IZQUIERDA: HERRAMIENTAS (4 columnas de ancho) */}
-          <div className="xl:col-span-4 space-y-6 sticky top-24">
+          {/* CORRECCIÓN CRÍTICA: 'xl:sticky' en lugar de 'sticky'. 
+              Esto evita que en el celular esta columna se quede pegada encima de todo al bajar. */}
+          <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-24">
+            
             {/* 1. Formulario de Ingreso Rápido */}
             <NuevoMovimientoForm negocioId={negocio.id} />
 
@@ -192,10 +197,11 @@ export default async function DashboardPage() {
           </div>
 
           {/* COLUMNA DERECHA: DATOS Y GRÁFICOS (8 columnas de ancho) */}
+          {/* En móvil, esta columna fluirá naturalmente debajo de la anterior */}
           <div className="xl:col-span-8 space-y-6">
             
             {/* 1. Gráficos */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-4 md:p-6 shadow-sm overflow-hidden">
                <GraficosFinancieros transacciones={txs} />
             </div>
 
@@ -209,7 +215,7 @@ export default async function DashboardPage() {
 
               {/* Historial de Transacciones */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+                <div className="px-4 md:px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Últimos Movimientos</h3>
                   {esPremium ? (
                     <BotonExportarExcel transacciones={txs} />
@@ -220,17 +226,17 @@ export default async function DashboardPage() {
                 
                 <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[600px] overflow-y-auto">
                   {txs.map((tx) => (
-                    <div key={tx.id} className="p-4 px-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className={`p-2 rounded-full ${tx.tipo === 'ingreso' ? 'bg-green-100 text-green-600 dark:bg-green-900/20' : 'bg-red-100 text-red-600 dark:bg-red-900/20'}`}>
+                    <div key={tx.id} className="p-4 px-4 md:px-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      <div className="flex items-center gap-3 md:gap-4 text-sm">
+                        <div className={`p-2 rounded-full shrink-0 ${tx.tipo === 'ingreso' ? 'bg-green-100 text-green-600 dark:bg-green-900/20' : 'bg-red-100 text-red-600 dark:bg-red-900/20'}`}>
                           {tx.tipo === 'ingreso' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{tx.descripcion}</p>
+                        <div className="min-w-0"> {/* min-w-0 ayuda a que el texto trunque en móviles */}
+                          <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors truncate max-w-[150px] sm:max-w-none">{tx.descripcion}</p>
                           <p className="text-[11px] text-slate-500 font-medium">{new Date(tx.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}</p>
                         </div>
                       </div>
-                      <span className={`font-bold text-base ${tx.tipo === 'ingreso' ? 'text-green-600 dark:text-green-500' : 'text-gray-900 dark:text-white'}`}>
+                      <span className={`font-bold text-base whitespace-nowrap ${tx.tipo === 'ingreso' ? 'text-green-600 dark:text-green-500' : 'text-gray-900 dark:text-white'}`}>
                         {tx.tipo === 'ingreso' ? '+' : '-'}${formatoCLP(tx.monto)}
                       </span>
                     </div>
@@ -251,7 +257,7 @@ export default async function DashboardPage() {
   )
 }
 
-// Subcomponente para limpiar el código de las tarjetas KPI
+// Subcomponente KPI
 function KpiCard({ titulo, valor, tipo, subtitulo }: { titulo: string, valor: number, tipo: 'ingreso' | 'gasto' | 'neutro', subtitulo: string }) {
   const color = tipo === 'ingreso' ? 'text-green-600' : tipo === 'gasto' ? 'text-red-500' : 'text-slate-900 dark:text-white';
   const bg = tipo === 'neutro' ? (valor > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700') : '';
