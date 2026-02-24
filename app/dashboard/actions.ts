@@ -14,16 +14,22 @@ export async function crearNegocio(formData: FormData) {
   if (!user) return redirect('/login')
 
   const nombre = formData.get('nombre') as string
+  // Obtenemos el tipo de perfil del input hidden, si falla ponemos 'personal'
+  const tipo_uso = (formData.get('tipo_perfil') as string) || 'personal'
+  
   const saldo_actual = Number(formData.get('saldo_actual'))
   const ingresos_mensuales = Number(formData.get('ingresos_mensuales'))
-  const gastos_fijos = Number(formData.get('gastos_fijos'))
-  const gastos_variables = Number(formData.get('gastos_variables'))
+  
+  // Si estos campos no vienen en el form simplificado, asumimos 0
+  const gastos_fijos = Number(formData.get('gastos_fijos') || 0)
+  const gastos_variables = Number(formData.get('gastos_variables') || 0)
 
   if (!nombre) return { error: "El nombre es obligatorio" }
 
   const { error } = await supabase.from('negocios').insert({
     user_id: user.id,
     nombre,
+    tipo_uso, // Guardamos si es Personal o Empresa
     saldo_actual,
     ingresos_mensuales,
     gastos_fijos,
@@ -48,7 +54,7 @@ export async function cerrarSesion() {
 }
 
 /**
- * 2. GESTIÓN DE TRANSACCIONES (Manual)
+ * 2. GESTIÓN DE TRANSACCIONES (Manual - Simplificada)
  */
 export async function agregarTransaccion(formData: FormData) {
   const supabase = await createClient()
@@ -60,7 +66,16 @@ export async function agregarTransaccion(formData: FormData) {
   const monto = Number(formData.get('monto'))
   const descripcion = formData.get('descripcion') as string
   const negocio_id = formData.get('negocio_id') as string
-  const categoria = (formData.get('categoria') as string) || 'Otros'
+  const fecha = (formData.get('fecha') as string) || new Date().toISOString()
+
+  // --- LÓGICA DE SIMPLIFICACIÓN ---
+  // Ya no obligamos al usuario a elegir categoría.
+  // Si no viene categoría, asignamos una por defecto según el tipo.
+  let categoria = formData.get('categoria') as string
+  
+  if (!categoria) {
+    categoria = tipo === 'ingreso' ? 'Ventas' : 'Operativo'
+  }
 
   if (!monto || monto <= 0 || !descripcion) {
     return { error: 'Datos inválidos. Por favor revisa el monto y la descripción.' }
@@ -72,7 +87,8 @@ export async function agregarTransaccion(formData: FormData) {
     tipo,
     monto,
     descripcion,
-    categoria,
+    categoria, // Se guarda la automática o la manual si existiera
+    created_at: fecha // Usamos la fecha del form o la actual
   })
 
   if (error) {
@@ -102,20 +118,23 @@ export async function importarMasivo(negocioId: string, datosExcel: any[]) {
       const nombreColumna = key.toLowerCase().trim();
       if (nombreColumna.includes('concepto') || nombreColumna.includes('descrip')) {
         concepto = String(fila[key]);
-      } else if (nombreColumna.includes('monto') || nombreColumna.includes('valor')) {
+      } else if (nombreColumna.includes('monto') || nombreColumna.includes('valor') || nombreColumna.includes('importe')) {
         monto = Number(fila[key]);
       } else if (nombreColumna.includes('tipo')) {
         tipoStr = String(fila[key]).toLowerCase();
       }
     }
 
+    const tipoFinal = tipoStr.includes('gasto') || tipoStr.includes('egreso') ? 'gasto' : 'ingreso';
+
     return {
       negocio_id: negocioId,
       user_id: user.id,
       descripcion: concepto,
       monto: Math.abs(monto || 0),
-      tipo: tipoStr.includes('gasto') || tipoStr.includes('egreso') ? 'gasto' : 'ingreso',
-      categoria: 'Otros'
+      tipo: tipoFinal,
+      // Asignamos categoría automática también en el Excel
+      categoria: tipoFinal === 'ingreso' ? 'Ventas' : 'Operativo'
     };
   });
 
