@@ -76,7 +76,7 @@ export async function signup(
     password,
     options: {
       // Importante: Esto asegura que al hacer clic en el correo, vuelvan a tu web
-      emailRedirectTo: `${origin}/auth/callback`, 
+      emailRedirectTo: `${origin}/dashboard`, 
     },
   })
 
