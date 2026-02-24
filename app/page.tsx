@@ -1,200 +1,265 @@
-'use client'
+export const dynamic = 'force-dynamic';
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+import { 
+  TrendingUp, TrendingDown, Activity, LogOut, Lock, LayoutDashboard
+} from 'lucide-react'
 
-import { useState } from 'react'
-import { Activity, ArrowRight, TrendingUp, ShieldCheck, Zap, BarChart3, Check } from "lucide-react";
-import Link from "next/link";
-import ThemeToggle from './dashboard/ThemeToggle' 
+// IMPORTACIONES DE COMPONENTES
+import ThemeToggle from './ThemeToggle'
+import ProyeccionHitos from './ProyeccionHitos'
+import GraficosFinancieros from './GraficosFinancieros' 
+import ApiSettings from './ApiSettings'
+import ImportadorExcel from './ImportadorExcel'
+import BotonExportarExcel from './BotonExportarExcel'
+import Simulador from './Simulador'
+import NuevoMovimientoForm from './NuevoMovimientoForm'
+import { cerrarSesion } from './actions'
+import OnboardingFlow from './OnboardingForm'
+import FeatureLock from './FeatureLock'
 
-export default function LandingPage() {
-  const [anual, setAnual] = useState(false)
+// INTERFAZ
+interface Transaccion {
+  id: string;
+  tipo: 'ingreso' | 'gasto' | string;
+  monto: number;
+  descripcion: string;
+  created_at: string;
+  categoria?: string;
+}
+
+const formatoCLP = (valor: number) => {
+  return new Intl.NumberFormat('es-CL').format(Math.round(valor));
+};
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // 1. DATA FETCHING
+  const { data: negocio } = await supabase
+    .from('negocios')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!negocio) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-slate-950 transition-colors">
+        <OnboardingFlow /> 
+      </main>
+    )
+  }
+
+  const { data: transacciones } = await supabase
+    .from('transacciones')
+    .select('*')
+    .eq('negocio_id', negocio.id)
+    .order('created_at', { ascending: false })
+
+  const { data: hitos } = await supabase
+    .from('hitos')
+    .select('*')
+    .eq('negocio_id', negocio.id)
+    .order('created_at', { ascending: false })
+
+  // 2. PROCESAMIENTO DE DATOS
+  const txs: Transaccion[] = (transacciones || []).map((t: any) => ({
+    ...t,
+    monto: Number(t.monto) 
+  }));
+  
+  const ingresosReales = txs
+    .filter((t) => t.tipo === 'ingreso')
+    .reduce((sum, t) => sum + t.monto, 0);
+
+  const gastosReales = txs
+    .filter((t) => t.tipo === 'gasto')
+    .reduce((sum, t) => sum + t.monto, 0);
+
+  const cajaViva = Number(negocio.saldo_actual) + ingresosReales - gastosReales;
+  
+  const gastosMensualesEstimados = (negocio.gastos_fijos || 0) + (negocio.gastos_variables || 0);
+  const flujoNetoMensual = (negocio.ingresos_mensuales || 0) - gastosMensualesEstimados;
+  const diasVida = flujoNetoMensual < 0 
+    ? Math.floor(cajaViva / (Math.abs(flujoNetoMensual) / 30)) 
+    : Infinity;
+
+  const planActual = (negocio.plan || 'gratis').toLowerCase();
+  const esPremium = planActual !== 'gratis'; 
+  const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
       
-      {/* BARRA DE NAVEGACIÓN */}
-      <nav className="border-b border-gray-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-500 font-bold text-xl">
-            <Activity size={24} />
-            <span>Flujent</span>
+      {/* HEADER */}
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-[1600px] mx-auto flex justify-between items-center w-full">
+          <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
+            <div className="bg-blue-600 p-1.5 rounded-lg">
+              <LayoutDashboard className="text-white" size={18} />
+            </div>
+            <span className="text-xl font-bold tracking-tight">Flujent</span>
+            <span className="text-gray-300 dark:text-slate-700 px-2">/</span>
+            <span className="text-gray-600 dark:text-slate-400 font-normal">{negocio.nombre}</span>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Link href="/login" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-              Iniciar Sesión
-            </Link>
-            {/* Este botón mandará a /dashboard/planes después del login porque no lleva parámetros */}
-            <Link href="/login" className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-md shadow-blue-500/20 active:scale-95">
-              Comenzar Gratis
-            </Link>
+            <form action={cerrarSesion}>
+              <button type="submit" className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 transition-colors font-medium">
+                <LogOut size={16} /> Salir
+              </button>
+            </form>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <main>
-        {/* SECCIÓN PRINCIPAL (HERO) */}
-        <section className="pt-24 pb-16 px-6 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium mb-6 border border-purple-200 dark:border-purple-800/50">
-            <Zap size={16} className="text-purple-500" />
-            <span>El motor financiero para tu negocio</span>
+      <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full space-y-6">
+        
+        {/* SECCIÓN 1: KPIs (Fila Superior) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard 
+            titulo="Caja Disponible" 
+            valor={cajaViva} 
+            tipo="neutro" 
+            subtitulo={cajaViva > 0 ? 'Saludable' : 'Crítico'} 
+          />
+          <KpiCard 
+            titulo="Ingresos Totales" 
+            valor={ingresosReales} 
+            tipo="ingreso" 
+            subtitulo="Ventas acumuladas" 
+          />
+          <KpiCard 
+            titulo="Gastos Totales" 
+            valor={gastosReales} 
+            tipo="gasto" 
+            subtitulo="Salidas acumuladas" 
+          />
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm border-l-4 border-l-purple-500 flex flex-col justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-purple-500 uppercase mb-1">Supervivencia</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
+                {diasVida === Infinity ? 'Resistencia Total' : `${diasVida} días`}
+              </p>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2 font-medium">Runway estimado</p>
           </div>
-          
-          <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-6 leading-tight">
-            Tus números claros.<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-500 dark:from-blue-400 dark:to-green-400">
-              Tu futuro asegurado.
-            </span>
-          </h1>
-          
-          <p className="text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
-            Controla tus ingresos, simula escenarios de riesgo y descubre exactamente cuánto tiempo de vida tiene tu emprendimiento. Todo en un solo lugar.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group">
-              Crear mi cuenta <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link href="#precios" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 text-lg font-semibold rounded-xl transition-all flex items-center justify-center">
-              Ver planes
-            </Link>
-          </div>
-        </section>
+        </div>
 
-        {/* SECCIÓN DE CARACTERÍSTICAS */}
-        <section className="py-20 bg-white dark:bg-slate-900 border-y border-gray-200 dark:border-slate-800 transition-colors">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Diseñado para la tranquilidad mental</h2>
-              <p className="text-slate-600 dark:text-slate-400">Herramientas de nivel empresarial, simplificadas para emprendedores.</p>
+        {/* SECCIÓN 2: GRID PRINCIPAL (BENTO LAYOUT) */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          
+          {/* COLUMNA IZQUIERDA: HERRAMIENTAS (4 columnas de ancho) */}
+          <div className="xl:col-span-4 space-y-6 sticky top-24">
+            {/* 1. Formulario de Ingreso Rápido */}
+            <NuevoMovimientoForm negocioId={negocio.id} />
+
+            {/* 2. Simulador IA (Runway) */}
+            {/* Le quitamos el margin-top interno al componente si lo tuviera para que pegue bien */}
+            <div className="mt-0"> 
+              <Simulador negocio={negocio} transacciones={txs} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <ShieldCheck size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Simulador de Riesgo</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Anticípate a las crisis. Descubre cuántos meses de cobertura tienes si tus ingresos caen sorpresivamente.</p>
-              </div>
-
-              <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <TrendingUp size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Control de Flujo</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Registra tus gastos e ingresos fácilmente. Observa tu crecimiento en gráficos analíticos avanzados.</p>
-              </div>
-
-              <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <BarChart3 size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Soberanía de Datos</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Importa tu historial desde Excel en segundos, y exporta tus reportes financieros con un solo clic.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECCIÓN DE PRECIOS */}
-        <section id="precios" className="py-24 max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Planes simples, sin letras chicas</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-8">Comienza gratis y mejora cuando tu negocio lo necesite.</p>
+            {/* 3. Simulador de Inversiones (Hitos) */}
+            {esPremium ? (
+              <ProyeccionHitos 
+                saldoInicial={cajaViva} 
+                negocioId={negocio.id} 
+                hitosGuardados={hitos || []} 
+              />
+            ) : (
+              <FeatureLock titulo="Proyecciones" descripcion="Simula compras futuras." planRequerido="Personal" />
+            )}
             
-            {/* Toggle Mensual / Anual */}
-            <div className="flex items-center justify-center gap-4">
-              <span className={`text-sm font-semibold ${!anual ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Mensual</span>
-              <button 
-                onClick={() => setAnual(!anual)}
-                className="relative inline-flex h-7 w-14 items-center rounded-full bg-blue-600 dark:bg-purple-600 transition-colors focus:outline-none"
-              >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${anual ? 'translate-x-8' : 'translate-x-1'}`} />
-              </button>
-              <span className={`text-sm font-semibold flex items-center gap-2 ${anual ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-                Anual <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">2 meses gratis</span>
-              </span>
-            </div>
+            {/* 4. API Settings */}
+            {esPlanEmpresa && (
+               <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* PLAN PERSONAL (Azul) */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all flex flex-col">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Plan Personal</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Ideal para freelancers y control de finanzas personales.</p>
-              </div>
-              <div className="mb-8">
-                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">
-                  ${anual ? '59.900' : '5.990'}
-                </span>
-                <span className="text-slate-500 dark:text-slate-400 font-medium">/ {anual ? 'año' : 'mes'}</span>
-                {anual && <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">Equivale a $4.990 al mes</p>}
-              </div>
-              <ul className="flex flex-col gap-4 mb-8 flex-1">
-                {[
-                  'Control de ingresos y gastos',
-                  'Simulador de riesgo financiero',
-                  'Gráficos analíticos',
-                  'Importación y exportación de Excel',
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
-                    <Check size={20} className="text-blue-500 shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              {/* Actualizado con parámetros de ciclo dinámicos */}
-              <Link href={`/login?plan=personal&ciclo=${anual ? 'anual' : 'mensual'}`} className="w-full py-3.5 px-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-center font-bold rounded-xl transition-colors">
-                Comenzar con Personal
-              </Link>
+          {/* COLUMNA DERECHA: DATOS Y GRÁFICOS (8 columnas de ancho) */}
+          <div className="xl:col-span-8 space-y-6">
+            
+            {/* 1. Gráficos (Ocupan todo el ancho disponible) */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
+               <GraficosFinancieros transacciones={txs} />
             </div>
 
-            {/* PLAN EMPRESA (Púrpura) */}
-            <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-8 border border-slate-800 relative shadow-2xl shadow-purple-900/20 flex flex-col transform md:-translate-y-4">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                  Recomendado
-                </span>
+            {/* 2. Importador y Historial juntos */}
+            <div className="space-y-4">
+              {esPlanEmpresa ? (
+                <ImportadorExcel negocioId={negocio.id} />
+              ) : (
+                <FeatureLock titulo="Importación Masiva" descripcion="Sube Excel bancario." planRequerido="Empresa" />
+              )}
+
+              {/* Historial de Transacciones */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+                  <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Últimos Movimientos</h3>
+                  {esPremium ? (
+                    <BotonExportarExcel transacciones={txs} />
+                  ) : (
+                    <button disabled className="opacity-50 text-xs flex items-center gap-1"><Lock size={12}/> Exportar</button>
+                  )}
+                </div>
+                
+                <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[600px] overflow-y-auto">
+                  {txs.map((tx) => (
+                    <div key={tx.id} className="p-4 px-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className={`p-2 rounded-full ${tx.tipo === 'ingreso' ? 'bg-green-100 text-green-600 dark:bg-green-900/20' : 'bg-red-100 text-red-600 dark:bg-red-900/20'}`}>
+                          {tx.tipo === 'ingreso' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{tx.descripcion}</p>
+                          <p className="text-[11px] text-slate-500 font-medium">{new Date(tx.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}</p>
+                        </div>
+                      </div>
+                      <span className={`font-bold text-base ${tx.tipo === 'ingreso' ? 'text-green-600 dark:text-green-500' : 'text-gray-900 dark:text-white'}`}>
+                        {tx.tipo === 'ingreso' ? '+' : '-'}${formatoCLP(tx.monto)}
+                      </span>
+                    </div>
+                  ))}
+                  {txs.length === 0 && (
+                    <div className="py-12 text-center">
+                      <p className="text-slate-400 text-sm">No hay movimientos registrados.</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-white mb-2">Plan Empresa</h3>
-                <p className="text-sm text-slate-400">Para Pymes que buscan automatización total y liquidez proyectada.</p>
-              </div>
-              <div className="mb-8">
-                <span className="text-4xl font-extrabold text-white">
-                  ${anual ? '199.900' : '19.990'}
-                </span>
-                <span className="text-slate-400 font-medium">/ {anual ? 'año' : 'mes'}</span>
-                {anual && <p className="text-sm text-purple-400 mt-2 font-medium">Equivale a $16.658 al mes</p>}
-              </div>
-              <ul className="flex flex-col gap-4 mb-8 flex-1">
-                {[
-                  'Todo lo del Plan Personal',
-                  'Llave API Secreta',
-                  'Automatización con Zapier y Shopify',
-                  'Múltiples negocios (Próximamente)'
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3 text-slate-300">
-                    <Check size={20} className="text-purple-500 shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              {/* Actualizado con parámetros de ciclo dinámicos */}
-              <Link href={`/login?plan=empresa&ciclo=${anual ? 'anual' : 'mensual'}`} className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl transition-all shadow-lg shadow-purple-600/30">
-                Seleccionar Empresa
-              </Link>
             </div>
+
           </div>
-        </section>
-
+        </div>
       </main>
-      
-      {/* PIE DE PÁGINA */}
-      <footer className="py-8 text-center text-slate-500 dark:text-slate-600 text-sm border-t border-gray-200 dark:border-slate-800">
-        <p>© {new Date().getFullYear()} Flujent. Hecho en Chile para emprendedores con visión.</p>
-      </footer>
+    </div>
+  )
+}
+
+// Subcomponente para limpiar el código de las tarjetas KPI
+function KpiCard({ titulo, valor, tipo, subtitulo }: { titulo: string, valor: number, tipo: 'ingreso' | 'gasto' | 'neutro', subtitulo: string }) {
+  const color = tipo === 'ingreso' ? 'text-green-600' : tipo === 'gasto' ? 'text-red-500' : 'text-slate-900 dark:text-white';
+  const bg = tipo === 'neutro' ? (valor > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700') : '';
+
+  return (
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div>
+        <p className={`text-[10px] font-bold uppercase mb-1 ${tipo === 'gasto' ? 'text-red-500' : tipo === 'ingreso' ? 'text-green-600' : 'text-slate-500'}`}>{titulo}</p>
+        <p className={`text-2xl font-black truncate ${color}`}>${new Intl.NumberFormat('es-CL').format(Math.round(valor))}</p>
+      </div>
+      {tipo === 'neutro' ? (
+        <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase w-fit ${bg}`}>
+          {subtitulo}
+        </span>
+      ) : (
+        <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-2 font-medium">
+          {tipo === 'ingreso' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          <span>{subtitulo}</span>
+        </div>
+      )}
     </div>
   )
 }

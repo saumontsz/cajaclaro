@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { 
-  TrendingUp, TrendingDown, Activity, LogOut, Lock
+  TrendingUp, TrendingDown, Activity, LogOut, Lock, LayoutDashboard
 } from 'lucide-react'
 
 // IMPORTACIONES DE COMPONENTES
@@ -18,11 +18,11 @@ import { cerrarSesion } from './actions'
 import OnboardingFlow from './OnboardingForm'
 import FeatureLock from './FeatureLock'
 
-// 1. CORRECCIÓN DE LA INTERFAZ (Ahora monto es solo 'number')
+// INTERFAZ
 interface Transaccion {
   id: string;
   tipo: 'ingreso' | 'gasto' | string;
-  monto: number; // <--- CAMBIO: Quitamos '| string'
+  monto: number;
   descripcion: string;
   created_at: string;
   categoria?: string;
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // 1. Obtenemos el negocio
+  // 1. DATA FETCHING
   const { data: negocio } = await supabase
     .from('negocios')
     .select('*')
@@ -52,22 +52,19 @@ export default async function DashboardPage() {
     )
   }
 
-  // 2. Obtenemos las transacciones
   const { data: transacciones } = await supabase
     .from('transacciones')
     .select('*')
     .eq('negocio_id', negocio.id)
     .order('created_at', { ascending: false })
 
-  // 3. Obtenemos los proyectos/hitos guardados
   const { data: hitos } = await supabase
     .from('hitos')
     .select('*')
     .eq('negocio_id', negocio.id)
     .order('created_at', { ascending: false })
 
-  // --- CORRECCIÓN DE DATOS: Aseguramos que 'monto' sea número ---
-  // Esto arregla el error de compilación convirtiendo cualquier string a número
+  // 2. PROCESAMIENTO DE DATOS
   const txs: Transaccion[] = (transacciones || []).map((t: any) => ({
     ...t,
     monto: Number(t.monto) 
@@ -89,7 +86,6 @@ export default async function DashboardPage() {
     ? Math.floor(cajaViva / (Math.abs(flujoNetoMensual) / 30)) 
     : Infinity;
 
-  // LÓGICA MAESTRA DE PLANES
   const planActual = (negocio.plan || 'gratis').toLowerCase();
   const esPremium = planActual !== 'gratis'; 
   const esPlanEmpresa = ['pyme', 'negocio', 'empresa', 'pro_empresa'].includes(planActual);
@@ -98,138 +94,172 @@ export default async function DashboardPage() {
     <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
       
       {/* HEADER */}
-      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
-          <Activity className="text-blue-600" size={20} />
-          <span className="text-xl font-bold tracking-tight">Flujent</span>
-          <span className="text-gray-300 dark:text-slate-700 px-2">|</span>
-          <span className="text-gray-600 dark:text-slate-400 font-normal">{negocio.nombre}</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          <form action={cerrarSesion}>
-            <button type="submit" className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 transition-colors">
-              <LogOut size={16} /> Salir
-            </button>
-          </form>
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-[1600px] mx-auto flex justify-between items-center w-full">
+          <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
+            <div className="bg-blue-600 p-1.5 rounded-lg">
+              <LayoutDashboard className="text-white" size={18} />
+            </div>
+            <span className="text-xl font-bold tracking-tight">Flujent</span>
+            <span className="text-gray-300 dark:text-slate-700 px-2">/</span>
+            <span className="text-gray-600 dark:text-slate-400 font-normal">{negocio.nombre}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <form action={cerrarSesion}>
+              <button type="submit" className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 transition-colors font-medium">
+                <LogOut size={16} /> Salir
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-6 max-w-[1600px] mx-auto w-full space-y-6">
         
-        {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
-            <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Caja Disponible</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">${formatoCLP(cajaViva)}</p>
-            <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${cajaViva > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-red-100 text-red-700'}`}>
-              {cajaViva > 0 ? 'Saludable' : 'Crítico'}
-            </span>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
-            <p className="text-[10px] font-bold text-green-600 uppercase mb-1">Ingresos Totales</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">${formatoCLP(ingresosReales)}</p>
-            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-1">
-              <TrendingUp size={12} className="text-green-500" />
-              <span>Acumulado de ventas</span>
+        {/* SECCIÓN 1: KPIs (Fila Superior) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard 
+            titulo="Caja Disponible" 
+            valor={cajaViva} 
+            tipo="neutro" 
+            subtitulo={cajaViva > 0 ? 'Saludable' : 'Crítico'} 
+          />
+          <KpiCard 
+            titulo="Ingresos Totales" 
+            valor={ingresosReales} 
+            tipo="ingreso" 
+            subtitulo="Ventas acumuladas" 
+          />
+          <KpiCard 
+            titulo="Gastos Totales" 
+            valor={gastosReales} 
+            tipo="gasto" 
+            subtitulo="Salidas acumuladas" 
+          />
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm border-l-4 border-l-purple-500 flex flex-col justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-purple-500 uppercase mb-1">Supervivencia</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
+                {diasVida === Infinity ? 'Resistencia Total' : `${diasVida} días`}
+              </p>
             </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
-            <p className="text-[10px] font-bold text-red-500 uppercase mb-1">Gastos Totales</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">${formatoCLP(gastosReales)}</p>
-            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-1">
-              <TrendingDown size={12} className="text-red-500" />
-              <span>Flujo de salida</span>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm border-l-4 border-l-purple-500">
-            <p className="text-[10px] font-bold text-purple-500 uppercase mb-1">Supervivencia</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">
-              {diasVida === Infinity ? 'Resistencia' : `${diasVida} días`}
-            </p>
-            <p className="text-[10px] text-slate-500 mt-1">Días de caja restante</p>
+            <p className="text-[10px] text-slate-400 mt-2 font-medium">Runway estimado</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* SECCIÓN 2: GRID PRINCIPAL (BENTO LAYOUT) */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           
-          <div className="lg:col-span-1">
+          {/* COLUMNA IZQUIERDA: HERRAMIENTAS (4 columnas de ancho) */}
+          <div className="xl:col-span-4 space-y-6 sticky top-24">
+            {/* 1. Formulario de Ingreso Rápido */}
             <NuevoMovimientoForm negocioId={negocio.id} />
+
+            {/* 2. Simulador IA (Runway) */}
+            {/* Le quitamos el margin-top interno al componente si lo tuviera para que pegue bien */}
+            <div className="mt-0"> 
+              <Simulador negocio={negocio} transacciones={txs} />
+            </div>
+
+            {/* 3. Simulador de Inversiones (Hitos) */}
+            {esPremium ? (
+              <ProyeccionHitos 
+                saldoInicial={cajaViva} 
+                negocioId={negocio.id} 
+                hitosGuardados={hitos || []} 
+              />
+            ) : (
+              <FeatureLock titulo="Proyecciones" descripcion="Simula compras futuras." planRequerido="Personal" />
+            )}
+            
+            {/* 4. API Settings */}
+            {esPlanEmpresa && (
+               <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
+            )}
           </div>
 
-          <div className="lg:col-span-3 space-y-8">
+          {/* COLUMNA DERECHA: DATOS Y GRÁFICOS (8 columnas de ancho) */}
+          <div className="xl:col-span-8 space-y-6">
             
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm min-h-[400px]">
+            {/* 1. Gráficos (Ocupan todo el ancho disponible) */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
                <GraficosFinancieros transacciones={txs} />
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden h-fit">
+            {/* 2. Importador y Historial juntos */}
+            <div className="space-y-4">
+              {esPlanEmpresa ? (
+                <ImportadorExcel negocioId={negocio.id} />
+              ) : (
+                <FeatureLock titulo="Importación Masiva" descripcion="Sube Excel bancario." planRequerido="Empresa" />
+              )}
+
+              {/* Historial de Transacciones */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
-                  <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">Historial</h3>
+                  <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Últimos Movimientos</h3>
                   {esPremium ? (
                     <BotonExportarExcel transacciones={txs} />
                   ) : (
-                    <button disabled className="text-xs flex items-center gap-1.5 font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg cursor-not-allowed border border-transparent">
-                      <Lock size={12} /> Exportar
-                    </button>
+                    <button disabled className="opacity-50 text-xs flex items-center gap-1"><Lock size={12}/> Exportar</button>
                   )}
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[400px] overflow-y-auto">
+                
+                <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[600px] overflow-y-auto">
                   {txs.map((tx) => (
-                    <div key={tx.id} className="p-4 px-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className={tx.tipo === 'ingreso' ? 'text-green-500' : 'text-red-500'}>
-                          {tx.tipo === 'ingreso' ? '↑' : '↓'}
-                        </span>
+                    <div key={tx.id} className="p-4 px-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className={`p-2 rounded-full ${tx.tipo === 'ingreso' ? 'bg-green-100 text-green-600 dark:bg-green-900/20' : 'bg-red-100 text-red-600 dark:bg-red-900/20'}`}>
+                          {tx.tipo === 'ingreso' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                        </div>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{tx.descripcion}</p>
-                          <p className="text-[10px] text-slate-500">{new Date(tx.created_at).toLocaleDateString()}</p>
+                          <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{tx.descripcion}</p>
+                          <p className="text-[11px] text-slate-500 font-medium">{new Date(tx.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}</p>
                         </div>
                       </div>
-                      <span className={`font-bold ${tx.tipo === 'ingreso' ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
-                        ${formatoCLP(tx.monto)}
+                      <span className={`font-bold text-base ${tx.tipo === 'ingreso' ? 'text-green-600 dark:text-green-500' : 'text-gray-900 dark:text-white'}`}>
+                        {tx.tipo === 'ingreso' ? '+' : '-'}${formatoCLP(tx.monto)}
                       </span>
                     </div>
                   ))}
-                  {txs.length === 0 && <p className="p-12 text-center text-gray-400 text-sm italic">No hay registros aún.</p>}
+                  {txs.length === 0 && (
+                    <div className="py-12 text-center">
+                      <p className="text-slate-400 text-sm">No hay movimientos registrados.</p>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <div className="space-y-8">
-                {esPremium ? (
-                  <ProyeccionHitos 
-                    saldoInicial={cajaViva} 
-                    negocioId={negocio.id} 
-                    hitosGuardados={hitos || []} 
-                  />
-                ) : (
-                  <FeatureLock titulo="Proyecciones de Inversión" descripcion="Simula compras grandes y analiza matemáticamente cómo impactarán tu liquidez." planRequerido="Personal" />
-                )}
-
-                {esPlanEmpresa ? (
-                  <ImportadorExcel negocioId={negocio.id} />
-                ) : (
-                  <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Empresa" />
-                )}
-                
-                {/* Ahora no dará error porque txs es estrictamente Transaccion[] */}
-                <Simulador negocio={negocio} transacciones={txs} />
-                
-                {esPlanEmpresa ? (
-                  <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
-                ) : (
-                  <FeatureLock titulo="Acceso API y Webhooks" descripcion="Conecta Flujent con otras plataformas para automatizar la entrada de tus datos." planRequerido="Empresa" />
-                )}
-              </div>
             </div>
+
           </div>
         </div>
       </main>
+    </div>
+  )
+}
+
+// Subcomponente para limpiar el código de las tarjetas KPI
+function KpiCard({ titulo, valor, tipo, subtitulo }: { titulo: string, valor: number, tipo: 'ingreso' | 'gasto' | 'neutro', subtitulo: string }) {
+  const color = tipo === 'ingreso' ? 'text-green-600' : tipo === 'gasto' ? 'text-red-500' : 'text-slate-900 dark:text-white';
+  const bg = tipo === 'neutro' ? (valor > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700') : '';
+
+  return (
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div>
+        <p className={`text-[10px] font-bold uppercase mb-1 ${tipo === 'gasto' ? 'text-red-500' : tipo === 'ingreso' ? 'text-green-600' : 'text-slate-500'}`}>{titulo}</p>
+        <p className={`text-2xl font-black truncate ${color}`}>${new Intl.NumberFormat('es-CL').format(Math.round(valor))}</p>
+      </div>
+      {tipo === 'neutro' ? (
+        <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase w-fit ${bg}`}>
+          {subtitulo}
+        </span>
+      ) : (
+        <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-2 font-medium">
+          {tipo === 'ingreso' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          <span>{subtitulo}</span>
+        </div>
+      )}
     </div>
   )
 }
