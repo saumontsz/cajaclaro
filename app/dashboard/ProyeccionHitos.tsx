@@ -89,7 +89,7 @@ export default function ProyeccionHitos({ saldoInicial, negocioId, hitosGuardado
           <div className="space-y-3 mb-5">
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">¿Qué quieres lograr o comprar?</label>
-              <input type="text" placeholder="Ej: Techar Cancha 2..." value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClasses} disabled={isPending} />
+              <input type="text" placeholder="Ej: Auto nuevo..." value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClasses} disabled={isPending} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

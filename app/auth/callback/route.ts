@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
         // ESCENARIO A: Usuario nuevo sin negocio -> A configurar
         if (!negocio) {
-          return NextResponse.redirect(`${origin}/onboarding`)
+          return NextResponse.redirect(`${origin}/dashboard`)
         }
 
         // ESCENARIO B: Tiene negocio y venía con intención de compra -> Al Checkout
