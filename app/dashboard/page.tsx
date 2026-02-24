@@ -18,11 +18,11 @@ import { cerrarSesion } from './actions'
 import OnboardingFlow from './OnboardingForm'
 import FeatureLock from './FeatureLock'
 
-// 1. DEFINICIÓN DE INTERFAZ PARA TYPESCRIPT
+// 1. CORRECCIÓN DE LA INTERFAZ (Ahora monto es solo 'number')
 interface Transaccion {
   id: string;
   tipo: 'ingreso' | 'gasto' | string;
-  monto: number | string;
+  monto: number; // <--- CAMBIO: Quitamos '| string'
   descripcion: string;
   created_at: string;
   categoria?: string;
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
     )
   }
 
-  // 2. Obtenemos las transacciones (Forzamos el tipo Transaccion[])
+  // 2. Obtenemos las transacciones
   const { data: transacciones } = await supabase
     .from('transacciones')
     .select('*')
@@ -66,16 +66,20 @@ export default async function DashboardPage() {
     .eq('negocio_id', negocio.id)
     .order('created_at', { ascending: false })
 
-  // --- CÁLCULOS MATEMÁTICOS CORREGIDOS CON TIPADO ---
-  const txs: Transaccion[] = transacciones || [];
+  // --- CORRECCIÓN DE DATOS: Aseguramos que 'monto' sea número ---
+  // Esto arregla el error de compilación convirtiendo cualquier string a número
+  const txs: Transaccion[] = (transacciones || []).map((t: any) => ({
+    ...t,
+    monto: Number(t.monto) 
+  }));
   
   const ingresosReales = txs
-    .filter((t: Transaccion) => t.tipo === 'ingreso')
-    .reduce((sum: number, t: Transaccion) => sum + Number(t.monto), 0);
+    .filter((t) => t.tipo === 'ingreso')
+    .reduce((sum, t) => sum + t.monto, 0);
 
   const gastosReales = txs
-    .filter((t: Transaccion) => t.tipo === 'gasto')
-    .reduce((sum: number, t: Transaccion) => sum + Number(t.monto), 0);
+    .filter((t) => t.tipo === 'gasto')
+    .reduce((sum, t) => sum + t.monto, 0);
 
   const cajaViva = Number(negocio.saldo_actual) + ingresosReales - gastosReales;
   
@@ -158,12 +162,9 @@ export default async function DashboardPage() {
 
           <div className="lg:col-span-3 space-y-8">
             
-            {/* Contenedor del Gráfico con Altura Fija para evitar errores de Recharts */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm min-h-[400px]">
                <GraficosFinancieros transacciones={txs} />
             </div>
-
-            
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               
@@ -179,7 +180,7 @@ export default async function DashboardPage() {
                   )}
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[400px] overflow-y-auto">
-                  {txs.map((tx: any) => (
+                  {txs.map((tx) => (
                     <div key={tx.id} className="p-4 px-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                       <div className="flex items-center gap-3 text-sm">
                         <span className={tx.tipo === 'ingreso' ? 'text-green-500' : 'text-red-500'}>
@@ -191,7 +192,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <span className={`font-bold ${tx.tipo === 'ingreso' ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
-                        ${formatoCLP(Number(tx.monto))}
+                        ${formatoCLP(tx.monto)}
                       </span>
                     </div>
                   ))}
@@ -216,8 +217,7 @@ export default async function DashboardPage() {
                   <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Empresa" />
                 )}
                 
-                {/* --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL --- */}
-                {/* Ahora pasamos las transacciones para que funcione el modo Inteligente */}
+                {/* Ahora no dará error porque txs es estrictamente Transaccion[] */}
                 <Simulador negocio={negocio} transacciones={txs} />
                 
                 {esPlanEmpresa ? (
