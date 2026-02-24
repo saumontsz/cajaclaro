@@ -39,7 +39,7 @@ export async function login(
     // VÁLVULA DE SEGURIDAD:
     // Si el usuario existe pero NO tiene negocio, lo mandamos a configurarlo.
     if (!negocio) {
-      return redirect('/onboarding');
+      return redirect('/dashboard');
     }
 
     const planActivo = (negocio.plan || 'gratis').toLowerCase();
@@ -76,7 +76,7 @@ export async function signup(
     password,
     options: {
       // Importante: Esto asegura que al hacer clic en el correo, vuelvan a tu web
-      emailRedirectTo: `${origin}/dashboard`, 
+      emailRedirectTo: `${origin}/auth/callback`, 
     },
   })
 
