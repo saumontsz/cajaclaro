@@ -1,8 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link' // <--- IMPORTANTE: Importamos Link
 import { 
-  TrendingUp, TrendingDown, Activity, LogOut, Lock, LayoutDashboard
+  TrendingUp, TrendingDown, Activity, LogOut, Lock, LayoutDashboard, Settings // <--- IMPORTANTE: Importamos Settings
 } from 'lucide-react'
 
 // IMPORTACIONES DE COMPONENTES
@@ -104,11 +105,23 @@ export default async function DashboardPage() {
             <span className="text-gray-300 dark:text-slate-700 px-2">/</span>
             <span className="text-gray-600 dark:text-slate-400 font-normal">{negocio.nombre}</span>
           </div>
-          <div className="flex items-center gap-4">
+          
+          <div className="flex items-center gap-2">
             <ThemeToggle />
+            
+            {/* --- AQUÍ ESTÁ EL NUEVO BOTÓN DE CONFIGURACIÓN --- */}
+            <Link 
+              href="/dashboard/configuracion" 
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-slate-800 rounded-lg transition-all"
+              title="Configuración"
+            >
+              <Settings size={20} />
+            </Link>
+            {/* ------------------------------------------------ */}
+
             <form action={cerrarSesion}>
-              <button type="submit" className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 transition-colors font-medium">
-                <LogOut size={16} /> Salir
+              <button type="submit" className="text-sm text-gray-500 hover:text-red-500 flex items-center gap-2 transition-colors font-medium p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg">
+                <LogOut size={18} /> <span className="hidden md:inline">Salir</span>
               </button>
             </form>
           </div>
@@ -157,7 +170,6 @@ export default async function DashboardPage() {
             <NuevoMovimientoForm negocioId={negocio.id} />
 
             {/* 2. Simulador IA (Runway) */}
-            {/* Le quitamos el margin-top interno al componente si lo tuviera para que pegue bien */}
             <div className="mt-0"> 
               <Simulador negocio={negocio} transacciones={txs} />
             </div>
@@ -182,7 +194,7 @@ export default async function DashboardPage() {
           {/* COLUMNA DERECHA: DATOS Y GRÁFICOS (8 columnas de ancho) */}
           <div className="xl:col-span-8 space-y-6">
             
-            {/* 1. Gráficos (Ocupan todo el ancho disponible) */}
+            {/* 1. Gráficos */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
                <GraficosFinancieros transacciones={txs} />
             </div>
