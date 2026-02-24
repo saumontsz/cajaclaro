@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   
-  // Si hay un error provisto por el proveedor (ej: el usuario canceló)
+  // 1. Preservar la intención de compra (si viene de Social Login)
+  const plan = searchParams.get('plan')
+  const ciclo = searchParams.get('ciclo')
+
+  // Manejo de errores del proveedor
   const error = searchParams.get('error')
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=${error}`)
@@ -14,15 +18,38 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient()
     
-    // Canjeamos el código secreto de Google por una sesión en Supabase
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    // 2. Canjeamos el código por la sesión
+    const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
     
-    if (!error) {
-      // Si todo sale bien, lo mandamos al panel de control
-      return NextResponse.redirect(`${origin}/dashboard`)
+    if (!sessionError) {
+      // 3. VERIFICACIÓN DE SEGURIDAD (Válvula de Onboarding)
+      // Obtenemos el usuario recién logueado
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        // Buscamos si ya tiene un negocio creado
+        const { data: negocio } = await supabase
+          .from('negocios')
+          .select('id, plan')
+          .eq('user_id', user.id)
+          .single()
+
+        // ESCENARIO A: Usuario nuevo sin negocio -> A configurar
+        if (!negocio) {
+          return NextResponse.redirect(`${origin}/onboarding`)
+        }
+
+        // ESCENARIO B: Tiene negocio y venía con intención de compra -> Al Checkout
+        if (plan && ciclo) {
+          return NextResponse.redirect(`${origin}/checkout?plan=${plan}&ciclo=${ciclo}`)
+        }
+
+        // ESCENARIO C: Login normal -> Al Dashboard
+        return NextResponse.redirect(`${origin}/dashboard`)
+      }
     }
   }
 
-  // Si algo falla o no hay código, lo devolvemos al login con un error
+  // Fallback de error
   return NextResponse.redirect(`${origin}/login?error=No se pudo autenticar tu cuenta`)
 }

@@ -1,42 +1,56 @@
-// app/login/page.tsx
-import { createClient } from '../../utils/supabase/server'
-import { redirect } from 'next/navigation'
-import { login, signup } from './actions' 
-import { Activity, AlertCircle } from 'lucide-react'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Activity, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
+import { login, signup } from './actions'
 import SocialLogins from './SocialLogins'
 
-// Añadimos plan y ciclo a la interfaz
-interface PageProps {
-  searchParams: Promise<{ message?: string; error?: string; plan?: string; ciclo?: string }>;
-}
-
-export default async function LoginPage({ searchParams }: PageProps) {
-  // 1. Desenvolvemos la promesa de searchParams
-  const params = await searchParams;
-  const message = params?.message;
-  const isError = params?.error;
+export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   
-  // 2. Extraemos la "Memoria del Clic"
-  const planDestino = params?.plan;
-  const cicloDestino = params?.ciclo;
+  // Estados visuales
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(searchParams.get('error'))
+  const [successMessage, setSuccessMessage] = useState(false)
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Recuperamos la "Memoria de Compra" de la URL
+  const planDestino = searchParams.get('plan')
+  const cicloDestino = searchParams.get('ciclo')
+  const message = searchParams.get('message')
 
-  if (user) {
-    // Si ya está logueado y viene de los botones de pago, lo mandamos al checkout directo.
-    if (planDestino && cicloDestino) {
-      redirect(`/checkout?plan=${planDestino}&ciclo=${cicloDestino}`)
-    }
-    // Si no, al dashboard normal
-    redirect('/dashboard')
+  // Manejador del Login
+  const handleLogin = async (formData: FormData) => {
+    setLoading(true)
+    setError(null)
+    
+    // Pasamos los params extra manualmente a la Server Action
+    const result = await login(formData, planDestino, cicloDestino)
+    
+    // Si hay redirección, la Server Action se encarga.
+    // Si llegamos aquí, podría haber un error (aunque login suele redirigir).
   }
 
-  // 3. Preparamos las acciones "empaquetadas" con los parámetros
-  // .bind(null, ...) inyecta los argumentos a la Server Action antes del FormData
-  const loginConPlan = login.bind(null, planDestino, cicloDestino);
-  const signupConPlan = signup.bind(null, planDestino, cicloDestino);
+  // Manejador del Registro
+  const handleSignup = async (formData: FormData) => {
+    setLoading(true)
+    setError(null)
+    setSuccessMessage(false)
+
+    // Llamamos a la acción de registro
+    const result = await signup(formData)
+
+    if (result?.error) {
+      setError(result.error)
+      setLoading(false)
+    } else if (result?.success) {
+      // ¡AQUÍ ESTÁ LA MAGIA VISUAL!
+      setSuccessMessage(true)
+      setLoading(false)
+    }
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-950">
@@ -47,75 +61,110 @@ export default async function LoginPage({ searchParams }: PageProps) {
             <Activity size={28} />
             <span>Flujent</span>
           </Link>
+          
+          {/* Título Dinámico */}
           <h2 className="text-2xl font-bold text-white">
-            {/* Mensaje dinámico si vienen a comprar */}
-            {planDestino ? 'Crea tu cuenta para continuar' : 'Accede a tu cuenta'}
+            {successMessage 
+              ? '¡Revisa tu correo!' 
+              : (planDestino ? 'Crea tu cuenta para continuar' : 'Accede a tu cuenta')}
           </h2>
+          
           <p className="text-slate-400 text-sm mt-2">
-            {planDestino ? `Estás a un paso de activar el Plan ${planDestino === 'empresa' ? 'Empresa' : 'Personal'}.` : 'Controla tus finanzas y proyecta tu futuro.'}
+            {successMessage
+              ? 'Te hemos enviado un enlace mágico para entrar.'
+              : (planDestino 
+                  ? `Estás a un paso de activar el Plan ${planDestino === 'empresa' ? 'Empresa' : 'Personal'}.` 
+                  : 'Controla tus finanzas y proyecta tu futuro.')}
           </p>
         </div>
 
-        <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl shadow-slate-950/50 border border-slate-800">
+        <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl shadow-slate-950/50 border border-slate-800 transition-all duration-300">
           
-          <form className="flex flex-col gap-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Correo electrónico</label>
-              <input 
-                name="email" 
-                type="email" 
-                required 
-                placeholder="tu@email.com" 
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-slate-500 transition-all" 
-              />
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-sm font-medium text-slate-300">Contraseña</label>
-                <button type="button" className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                  ¿Olvidaste tu contraseña?
-                </button>
+          {/* MOSTRAR MENSAJE DE ÉXITO (VERDE) O FORMULARIO */}
+          {successMessage ? (
+            <div className="flex flex-col items-center py-6 animate-in fade-in zoom-in">
+              <div className="bg-green-500/10 p-4 rounded-full mb-4">
+                <CheckCircle2 size={48} className="text-green-500" />
               </div>
-              <input 
-                name="password" 
-                type="password" 
-                required 
-                placeholder="••••••••" 
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-slate-500 transition-all" 
-              />
-            </div>
-
-            {message && (
-              <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
-                isError ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-              }`}>
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{message}</span>
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-3 mt-2">
-              {/* Usamos las acciones empaquetadas */}
-              <button formAction={loginConPlan} className="w-full px-4 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">
-                Iniciar sesión
-              </button>
-              <button formAction={signupConPlan} className="w-full px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-xl transition-all border border-slate-700 active:scale-[0.98]">
-                Crear cuenta nueva
+              <p className="text-slate-300 text-center text-sm mb-6 leading-relaxed">
+                Hemos enviado un correo de confirmación. <br/>
+                Haz clic en el enlace para activar tu cuenta y acceder a Flujent.
+              </p>
+              <button 
+                onClick={() => setSuccessMessage(false)}
+                className="text-sm text-slate-500 hover:text-white underline"
+              >
+                Volver al formulario
               </button>
             </div>
-          </form>
+          ) : (
+            <>
+              <form className="flex flex-col gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Correo electrónico</label>
+                  <input 
+                    name="email" 
+                    type="email" 
+                    required 
+                    placeholder="tu@email.com" 
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-slate-500 transition-all" 
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-sm font-medium text-slate-300">Contraseña</label>
+                  </div>
+                  <input 
+                    name="password" 
+                    type="password" 
+                    required 
+                    placeholder="••••••••" 
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-slate-500 transition-all" 
+                  />
+                </div>
 
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-slate-900 px-4 text-slate-500 font-medium tracking-wider">O continúa con</span>
-            </div>
-          </div>
+                {/* Mensajes de Error */}
+                {(error || message) && (
+                  <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
+                    error ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                  }`}>
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{error || message}</span>
+                  </div>
+                )}
+                
+                <div className="flex flex-col gap-3 mt-2">
+                  <button 
+                    formAction={handleLogin} 
+                    disabled={loading}
+                    className="w-full px-4 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex justify-center items-center"
+                  >
+                    {loading ? <Loader2 className="animate-spin" /> : 'Iniciar sesión'}
+                  </button>
+                  
+                  <button 
+                    formAction={handleSignup} 
+                    disabled={loading}
+                    className="w-full px-4 py-3.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 font-medium rounded-xl transition-all border border-slate-700 active:scale-[0.98] flex justify-center items-center"
+                  >
+                    {loading ? <Loader2 className="animate-spin" /> : 'Crear cuenta nueva'}
+                  </button>
+                </div>
+              </form>
 
-          <SocialLogins />
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-800"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-slate-900 px-4 text-slate-500 font-medium tracking-wider">O continúa con</span>
+                </div>
+              </div>
+
+              <SocialLogins />
+            </>
+          )}
 
         </div>
       </div>
