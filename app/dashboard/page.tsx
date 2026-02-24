@@ -19,7 +19,6 @@ import OnboardingFlow from './OnboardingForm'
 import FeatureLock from './FeatureLock'
 
 // 1. DEFINICIÓN DE INTERFAZ PARA TYPESCRIPT
-// Esto elimina el error "Parameter 't' implicitly has an 'any' type"
 interface Transaccion {
   id: string;
   tipo: 'ingreso' | 'gasto' | string;
@@ -217,7 +216,9 @@ export default async function DashboardPage() {
                   <FeatureLock titulo="Importación Masiva" descripcion="Sube cartolas del banco enteras para no registrar cobros ni pagos a mano." planRequerido="Empresa" />
                 )}
                 
-                <Simulador negocio={negocio} />
+                {/* --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL --- */}
+                {/* Ahora pasamos las transacciones para que funcione el modo Inteligente */}
+                <Simulador negocio={negocio} transacciones={txs} />
                 
                 {esPlanEmpresa ? (
                   <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
