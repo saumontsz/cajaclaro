@@ -8,8 +8,7 @@ import {
 // IMPORTACIONES DE COMPONENTES
 import ThemeToggle from './ThemeToggle'
 import ProyeccionHitos from './ProyeccionHitos'
-import GraficosFinancieros from './GraficosFinancieros'
-import GraficoCategorias from './GraficoCategorias' 
+import GraficosFinancieros from './GraficosFinancieros' 
 import ApiSettings from './ApiSettings'
 import ImportadorExcel from './ImportadorExcel'
 import BotonExportarExcel from './BotonExportarExcel'
@@ -165,12 +164,7 @@ export default async function DashboardPage() {
                <GraficosFinancieros transacciones={txs} />
             </div>
 
-            {/* GRÁFICO DE CATEGORÍAS (Exclusivo Empresa) */}
-            {esPlanEmpresa && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm min-h-[350px]">
-                <GraficoCategorias transacciones={txs} />
-              </div>
-            )}
+            
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               
