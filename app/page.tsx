@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image' // IMPORTANTE: Importamos el componente de imagen
 import { 
   Activity, ArrowRight, TrendingUp, ShieldCheck, Zap, BarChart3, 
   Check, Sun, Moon, ChevronDown, Star, Users 
@@ -9,10 +10,9 @@ import Link from "next/link";
 
 export default function LandingPage() {
   const [anual, setAnual] = useState(false)
-  
-  // Lógica de tema oscuro integrada
   const [isDark, setIsDark] = useState(false)
 
+  // Lógica de tema oscuro (Persistencia y detección)
   useEffect(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setIsDark(true)
@@ -33,6 +33,64 @@ export default function LandingPage() {
       localStorage.theme = 'dark'
       setIsDark(true)
     }
+  }
+
+  // Subcomponentes para tarjetas (definidos abajo, pero usados aquí)
+  const FeatureCard = ({ icon, title, desc, color }: { icon: any, title: string, desc: string, color: 'blue' | 'green' | 'purple' }) => {
+    const colors = {
+      blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+      green: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+      purple: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
+    }
+    return (
+      <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
+        <div className={`w-12 h-12 ${colors[color]} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+          {icon}
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
+        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</p>
+      </div>
+    )
+  }
+
+  const TestimonialCard = ({ nombre, rol, texto }: { nombre: string, rol: string, texto: string }) => (
+    <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 relative shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex gap-1 mb-4 text-yellow-400">
+        {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+      </div>
+      <p className="text-slate-600 dark:text-slate-300 mb-6 relative z-10 italic leading-relaxed">
+        "{texto}"
+      </p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+            <Users size={18} className="text-slate-500" />
+        </div>
+        <div>
+          <p className="font-bold text-slate-900 dark:text-white text-sm">{nombre}</p>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{rol}</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  const FaqItem = ({ pregunta, respuesta }: { pregunta: string, respuesta: string }) => {
+    const [isOpen, setIsOpen] = useState(false)
+    return (
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-gray-200 dark:border-slate-800 overflow-hidden">
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-6 py-4 text-left flex items-center justify-between font-bold text-slate-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors"
+        >
+          {pregunta}
+          <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? 'rotate-180 text-blue-500' : 'text-slate-400'}`} />
+        </button>
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="px-6 pb-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed border-t border-gray-100 dark:border-slate-900 pt-4">
+            {respuesta}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -84,7 +142,7 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
-            <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group hover:scale-105">
+            <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group hover:scale-105">
               Crear mi cuenta <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link href="#precios" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 text-lg font-semibold rounded-xl transition-all flex items-center justify-center hover:scale-105">
@@ -93,23 +151,40 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SECCIÓN DEMO VISUAL (NUEVO) */}
+        {/* SECCIÓN DEMO VISUAL (INTEGRACIÓN DE IMÁGENES) */}
         <section className="py-12 px-6">
           <div className="max-w-6xl mx-auto text-center">
-            <div className="relative rounded-3xl border-4 md:border-8 border-slate-900/5 dark:border-slate-800 bg-slate-900 shadow-2xl overflow-hidden aspect-video mx-auto transform hover:scale-[1.01] transition-transform duration-500">
-              {/* Placeholder para cuando tengas la captura real */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-white dark:from-slate-900 dark:to-slate-800 flex items-center justify-center group cursor-default">
-                <div className="text-center space-y-6 p-8">
-                    <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-500">
-                      <BarChart3 size={40} className="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Panel de Control Inteligente</h3>
-                    <p className="text-slate-500 max-w-md mx-auto">
-                      Aquí iría una captura de pantalla de tu nuevo Dashboard. <br/>
-                      <span className="text-xs uppercase tracking-wider font-bold text-blue-500 mt-2 block">Vista Previa</span>
-                    </p>
-                </div>
+            
+            {/* Contenedor con efecto de elevación y bordes */}
+            <div className="relative rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden mx-auto transform hover:scale-[1.01] transition-transform duration-500 group">
+              
+              {/* IMAGEN MODO CLARO (Visible por defecto, oculta en dark mode) */}
+              <div className="block dark:hidden">
+                <Image
+                  src="/dashboard claro.png" // Asegúrate de que esté en la carpeta public
+                  alt="Flujent Dashboard Claro"
+                  width={1400}
+                  height={900}
+                  priority
+                  className="w-full h-auto object-cover"
+                />
               </div>
+
+              {/* IMAGEN MODO OSCURO (Oculta por defecto, visible en dark mode) */}
+              <div className="hidden dark:block">
+                <Image
+                  src="/dashboard oscuro.png" // Asegúrate de que esté en la carpeta public
+                  alt="Flujent Dashboard Oscuro"
+                  width={1400}
+                  height={900}
+                  priority
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+
+              {/* Overlay de brillo sutil */}
+              <div className="absolute inset-0 ring-1 ring-inset ring-black/5 dark:ring-white/5 rounded-[32px] pointer-events-none"></div>
+              
             </div>
           </div>
         </section>
@@ -145,7 +220,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SECCIÓN TESTIMONIOS (NUEVO) */}
+        {/* SECCIÓN TESTIMONIOS */}
         <section className="py-24 bg-slate-50 dark:bg-slate-950/50">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-center text-slate-900 dark:text-white mb-16">
@@ -264,7 +339,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* SECCIÓN FAQ (NUEVO) */}
+        {/* SECCIÓN FAQ */}
         <section className="py-20 bg-gray-50 dark:bg-slate-900/30">
           <div className="max-w-3xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-center text-slate-900 dark:text-white mb-12">
@@ -300,69 +375,6 @@ export default function LandingPage() {
         </div>
         <p className="text-slate-500 dark:text-slate-600 text-sm">© {new Date().getFullYear()} Flujent. Hecho en Chile para emprendedores con visión.</p>
       </footer>
-    </div>
-  )
-}
-
-// --- SUBCOMPONENTES ---
-
-function FeatureCard({ icon, title, desc, color }: { icon: any, title: string, desc: string, color: 'blue' | 'green' | 'purple' }) {
-  const colors = {
-    blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-    green: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
-    purple: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
-  }
-  
-  return (
-    <div className="p-8 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 hover:shadow-lg transition-all group">
-      <div className={`w-12 h-12 ${colors[color]} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-        {icon}
-      </div>
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
-      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</p>
-    </div>
-  )
-}
-
-function TestimonialCard({ nombre, rol, texto }: { nombre: string, rol: string, texto: string }) {
-  return (
-    <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 relative shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex gap-1 mb-4 text-yellow-400">
-        {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="currentColor" />)}
-      </div>
-      <p className="text-slate-600 dark:text-slate-300 mb-6 relative z-10 italic leading-relaxed">
-        "{texto}"
-      </p>
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-            <Users size={18} className="text-slate-500" />
-        </div>
-        <div>
-          <p className="font-bold text-slate-900 dark:text-white text-sm">{nombre}</p>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{rol}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FaqItem({ pregunta, respuesta }: { pregunta: string, respuesta: string }) {
-  const [isOpen, setIsOpen] = useState(false)
-  
-  return (
-    <div className="bg-white dark:bg-slate-950 rounded-2xl border border-gray-200 dark:border-slate-800 overflow-hidden">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 text-left flex items-center justify-between font-bold text-slate-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors"
-      >
-        {pregunta}
-        <ChevronDown size={20} className={`transform transition-transform duration-300 ${isOpen ? 'rotate-180 text-blue-500' : 'text-slate-400'}`} />
-      </button>
-      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-6 pb-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed border-t border-gray-100 dark:border-slate-900 pt-4">
-          {respuesta}
-        </div>
-      </div>
     </div>
   )
 }
