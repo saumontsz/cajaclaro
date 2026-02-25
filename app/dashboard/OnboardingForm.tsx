@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { crearNegocio, cerrarSesion } from './actions' // Importamos cerrarSesion
+import { crearNegocio, cerrarSesion } from './actions'
 import { AlertCircle, Building2, User, CheckCircle2, LogOut } from 'lucide-react'
 
 export default function OnboardingForm() {
@@ -9,20 +9,50 @@ export default function OnboardingForm() {
   const [errorUI, setErrorUI] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
-  const manejarEnvio = async (formData: FormData) => {
+  // Estado para los valores formateados (lo que ve el usuario)
+  const [valores, setValores] = useState({
+    saldo_actual: '',
+    ingresos_mensuales: ''
+  })
+
+  // Función para formatear: 1000000 -> 1.000.000
+  const formatearMiles = (valor: string) => {
+    const soloNumeros = valor.replace(/\D/g, '')
+    if (!soloNumeros) return ''
+    return new Intl.NumberFormat('es-CL').format(Number(soloNumeros))
+  }
+
+  // Función para limpiar: 1.000.000 -> 1000000
+  const limpiarPuntos = (valor: string) => valor.replace(/\./g, '')
+
+  const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setValores(prev => ({
+      ...prev,
+      [name]: formatearMiles(value)
+    }))
+  }
+
+  const manejarEnvio = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setErrorUI(null)
     setIsPending(true)
 
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    // REEMPLAZO CRÍTICO: Limpiamos los puntos antes de enviar al Action
+    formData.set('saldo_actual', limpiarPuntos(valores.saldo_actual))
+    formData.set('ingresos_mensuales', limpiarPuntos(valores.ingresos_mensuales))
+
     try {
       const resultado = await crearNegocio(formData)
-
       if (resultado?.error) {
         setErrorUI(resultado.error)
         setIsPending(false)
       }
-      // Si no hay error, la acción del servidor debería redirigir automáticamente
-    } catch (e) {
-      setErrorUI("Ocurrió un error inesperado. Inténtalo de nuevo.")
+    } catch (err) {
+      setErrorUI("Ocurrió un error inesperado.")
       setIsPending(false)
     }
   }
@@ -30,7 +60,6 @@ export default function OnboardingForm() {
   return (
     <div className="max-w-md w-full space-y-4">
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-xl">
-        
         <div className="text-center mb-6">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">¡Bienvenido a Flujent!</h2>
           <p className="text-slate-500 text-sm mt-1">Configuremos tu espacio de trabajo.</p>
@@ -43,9 +72,7 @@ export default function OnboardingForm() {
           </div>
         )}
 
-        <form action={manejarEnvio} className="space-y-6">
-          
-          {/* 1. SELECCIÓN DE TIPO */}
+        <form onSubmit={manejarEnvio} className="space-y-6">
           <div className="grid grid-cols-2 gap-3 relative">
             <button
               type="button"
@@ -78,7 +105,6 @@ export default function OnboardingForm() {
 
           <input type="hidden" name="tipo_perfil" value={tipoSeleccionado} />
 
-          {/* 2. CAMPOS DEL FORMULARIO */}
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">
@@ -96,11 +122,29 @@ export default function OnboardingForm() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Saldo Inicial</label>
-                <input name="saldo_actual" type="number" placeholder="0" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white" />
+                <input 
+                  name="saldo_actual" 
+                  type="text" 
+                  inputMode="numeric"
+                  value={valores.saldo_actual}
+                  onChange={manejarCambio}
+                  placeholder="0" 
+                  required 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white" 
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Ingresos Est.</label>
-                <input name="ingresos_mensuales" type="number" placeholder="0" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white" />
+                <input 
+                  name="ingresos_mensuales" 
+                  type="text" 
+                  inputMode="numeric"
+                  value={valores.ingresos_mensuales}
+                  onChange={manejarCambio}
+                  placeholder="0" 
+                  required 
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white" 
+                />
               </div>
             </div>
           </div>
@@ -108,14 +152,13 @@ export default function OnboardingForm() {
           <button 
             type="submit" 
             disabled={isPending}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
+            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-lg transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-blue-600/20"
           >
             {isPending ? "Creando espacio..." : "Comenzar"}
           </button>
         </form>
       </div>
 
-      {/* BOTÓN DE SALIDA DE EMERGENCIA */}
       <div className="text-center">
         <form action={cerrarSesion}>
           <button 
