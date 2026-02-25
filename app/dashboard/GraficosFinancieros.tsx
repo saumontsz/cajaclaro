@@ -1,7 +1,7 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { PieChart as PieChartIcon, BarChart3 } from 'lucide-react'
+import { PieChart as PieChartIcon, BarChart3, Info } from 'lucide-react'
 
 interface Props {
   transacciones: any[];
@@ -13,7 +13,6 @@ const formatearDinero = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(valor);
 };
 
-// Estilo de Tooltip profesional y legible
 const tooltipEstiloPro = {
   contentStyle: { 
     backgroundColor: '#fff', 
@@ -28,7 +27,7 @@ const tooltipEstiloPro = {
     marginBottom: '4px' 
   },
   itemStyle: { 
-    color: '#0f172a', // Color oscuro intenso para los números
+    color: '#0f172a', 
     fontSize: '14px', 
     fontWeight: '800' 
   }
@@ -39,17 +38,38 @@ export default function GraficosFinancieros({ transacciones }: Props) {
     return null; 
   }
 
-  const datosBarras = transacciones.reduce((acc: any[], tx) => {
-    const fecha = new Date(tx.created_at).toLocaleDateString('es-CL', { month: 'short', day: 'numeric' });
-    const existente = acc.find(item => item.fecha === fecha);
-    if (existente) {
-      if (tx.tipo === 'ingreso') existente.Ingresos += Number(tx.monto);
-      if (tx.tipo === 'gasto') existente.Gastos += Number(tx.monto);
-    } else {
-      acc.push({ fecha, Ingresos: tx.tipo === 'ingreso' ? Number(tx.monto) : 0, Gastos: tx.tipo === 'gasto' ? Number(tx.monto) : 0 });
-    }
-    return acc;
-  }, []).reverse(); 
+  // --- NUEVA LÓGICA: AGRUPACIÓN SEMANAL ---
+  const procesarDatosBarras = (txs: any[]) => {
+    const grupos = txs.reduce((acc: any, tx) => {
+      const fecha = new Date(tx.created_at);
+      
+      // Calculamos el inicio de la semana (Lunes)
+      const lunes = new Date(fecha);
+      lunes.setDate(fecha.getDate() - fecha.getDay() + (fecha.getDay() === 0 ? -6 : 1));
+      
+      // Etiqueta: "14 Feb"
+      const etiqueta = lunes.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+
+      if (!acc[etiqueta]) {
+        acc[etiqueta] = { 
+          fecha: etiqueta, 
+          Ingresos: 0, 
+          Gastos: 0, 
+          sortKey: lunes.getTime() 
+        };
+      }
+
+      if (tx.tipo === 'ingreso') acc[etiqueta].Ingresos += Number(tx.monto);
+      else acc[etiqueta].Gastos += Number(tx.monto);
+
+      return acc;
+    }, {});
+
+    // Ordenamos cronológicamente y devolvemos el array
+    return Object.values(grupos).sort((a: any, b: any) => a.sortKey - b.sortKey);
+  };
+
+  const datosBarras = procesarDatosBarras(transacciones);
 
   const gastos = transacciones.filter(tx => tx.tipo === 'gasto');
   const datosTorta = gastos.reduce((acc: any[], tx) => {
@@ -64,30 +84,48 @@ export default function GraficosFinancieros({ transacciones }: Props) {
       
       {/* Tarjeta Gráfico de Barras */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
-        <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
-          <BarChart3 className="text-blue-600 dark:text-blue-500" size={20} />
-          <h3 className="font-bold text-lg tracking-tight">Flujo Diario</h3>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2 text-gray-800 dark:text-white">
+            <BarChart3 className="text-blue-600 dark:text-blue-500" size={20} />
+            <h3 className="font-bold text-lg tracking-tight">Flujo Semanal</h3>
+          </div>
+          <div className="flex items-center gap-1 text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-1 rounded-full font-bold uppercase">
+             <Info size={12}/> Vista Agrupada
+          </div>
         </div>
+
         <div className="w-full min-h-[300px] flex-1 text-xs">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={datosBarras} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+            <BarChart 
+              data={datosBarras} 
+              margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+              barGap={8}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-              <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} dy={10} />
+              <XAxis 
+                dataKey="fecha" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8' }} 
+                dy={10} 
+              />
               <YAxis hide />
               <Tooltip 
                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                 {...tooltipEstiloPro}
                 formatter={(value: any) => [`$${formatearDinero(Number(value || 0))}`, '']}
               />
-              <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-              <Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-              <Bar dataKey="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              <Legend iconType="circle" wrapperStyle={{ paddingTop: '30px' }} />
+              
+              {/* --- CAMBIO CLAVE: barSize fijo para que se vean gruesas --- */}
+              <Bar dataKey="Ingresos" fill="#10b981" radius={[6, 6, 0, 0]} barSize={28} />
+              <Bar dataKey="Gastos" fill="#ef4444" radius={[6, 6, 0, 0]} barSize={28} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Tarjeta Gráfico de Torta (CORREGIDO) */}
+      {/* Tarjeta Gráfico de Torta */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
         <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
           <PieChartIcon className="text-purple-600 dark:text-purple-500" size={20} />
@@ -104,7 +142,6 @@ export default function GraficosFinancieros({ transacciones }: Props) {
                   ))}
                 </Pie>
                 <Tooltip 
-                  // Aplicamos el estilo de alto contraste
                   {...tooltipEstiloPro}
                   formatter={(value: any) => [`$${formatearDinero(Number(value || 0))}`, 'Total']}
                 />
