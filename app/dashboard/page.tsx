@@ -198,7 +198,7 @@ export default async function DashboardPage() {
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-4 md:p-6 shadow-sm overflow-hidden">
                <GraficosFinancieros 
                   transacciones={txs} 
-                  metaMensual={Number(negocio.ingresos_mensuales || 0)} // Pasamos la meta real
+                  
                 />
             </div>
 
