@@ -95,7 +95,6 @@ export default async function DashboardPage() {
     <div className="min-h-screen flex flex-col pb-12 bg-gray-50/50 dark:bg-slate-950 transition-colors">
       
       {/* HEADER */}
-      {/* Ajusté el px-4 para móviles y px-6 para escritorio */}
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 md:px-6 py-4 sticky top-0 z-50 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center w-full">
           <div className="flex items-center gap-2 text-gray-900 dark:text-white font-semibold">
@@ -103,7 +102,6 @@ export default async function DashboardPage() {
               <LayoutDashboard className="text-white" size={18} />
             </div>
             <span className="text-xl font-bold tracking-tight">Flujent</span>
-            {/* Ocultamos el nombre del negocio en móviles muy pequeños si es necesario, o lo dejamos */}
             <span className="text-gray-300 dark:text-slate-700 px-2 hidden sm:inline">/</span>
             <span className="text-gray-600 dark:text-slate-400 font-normal hidden sm:inline">{negocio.nombre}</span>
           </div>
@@ -129,10 +127,9 @@ export default async function DashboardPage() {
       </header>
 
       {/* MAIN CONTENT */}
-      {/* Reduje p-6 a p-4 en móviles para ganar espacio lateral */}
       <main className="flex-1 p-4 md:p-6 max-w-[1600px] mx-auto w-full space-y-6">
         
-        {/* SECCIÓN 1: KPIs (Fila Superior) */}
+        {/* SECCIÓN 1: KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard 
             titulo="Caja Disponible" 
@@ -152,34 +149,36 @@ export default async function DashboardPage() {
             tipo="gasto" 
             subtitulo="Salidas acumuladas" 
           />
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm border-l-4 border-l-purple-500 flex flex-col justify-between">
+          
+          {/* KPI DE SUPERVIVENCIA ACTUALIZADO */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm border-l-4 border-l-purple-500 flex flex-col justify-between h-full">
             <div>
               <p className="text-[10px] font-bold text-purple-500 uppercase mb-1">Supervivencia</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white truncate">
-                {diasVida === Infinity ? 'Resistencia Total' : `${diasVida} días`}
+              <p className={`text-2xl font-black truncate ${diasVida === Infinity ? 'text-green-600 dark:text-green-500' : 'text-slate-900 dark:text-white'}`}>
+                {diasVida === Infinity ? 'Flujo Positivo' : `${diasVida} días`}
               </p>
             </div>
-            <p className="text-[10px] text-slate-400 mt-2 font-medium">Runway estimado</p>
+            <div className="mt-2">
+              {diasVida === Infinity ? (
+                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase w-fit bg-green-100 text-green-700 dark:bg-green-900/20">
+                  Crecimiento Sostenible
+                </span>
+              ) : (
+                <p className="text-[10px] text-slate-400 font-medium italic">Runway estimado</p>
+              )}
+            </div>
           </div>
         </div>
 
         {/* SECCIÓN 2: GRID PRINCIPAL (BENTO LAYOUT) */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           
-          {/* COLUMNA IZQUIERDA: HERRAMIENTAS (4 columnas de ancho) */}
-          {/* CORRECCIÓN CRÍTICA: 'xl:sticky' en lugar de 'sticky'. 
-              Esto evita que en el celular esta columna se quede pegada encima de todo al bajar. */}
+          {/* COLUMNA IZQUIERDA */}
           <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-24">
-            
-            {/* 1. Formulario de Ingreso Rápido */}
             <NuevoMovimientoForm negocioId={negocio.id} />
-
-            {/* 2. Simulador IA (Runway) */}
             <div className="mt-0"> 
               <Simulador negocio={negocio} transacciones={txs} />
             </div>
-
-            {/* 3. Simulador de Inversiones (Hitos) */}
             {esPremium ? (
               <ProyeccionHitos 
                 saldoInicial={cajaViva} 
@@ -189,23 +188,17 @@ export default async function DashboardPage() {
             ) : (
               <FeatureLock titulo="Proyecciones" descripcion="Simula compras futuras." planRequerido="Personal" />
             )}
-            
-            {/* 4. API Settings */}
             {esPlanEmpresa && (
                <ApiSettings plan={planActual} apiKey={negocio.api_key} negocioId={negocio.id} />
             )}
           </div>
 
-          {/* COLUMNA DERECHA: DATOS Y GRÁFICOS (8 columnas de ancho) */}
-          {/* En móvil, esta columna fluirá naturalmente debajo de la anterior */}
+          {/* COLUMNA DERECHA */}
           <div className="xl:col-span-8 space-y-6">
-            
-            {/* 1. Gráficos */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-4 md:p-6 shadow-sm overflow-hidden">
                <GraficosFinancieros transacciones={txs} />
             </div>
 
-            {/* 2. Importador y Historial juntos */}
             <div className="space-y-4">
               {esPlanEmpresa ? (
                 <ImportadorExcel negocioId={negocio.id} />
@@ -213,7 +206,6 @@ export default async function DashboardPage() {
                 <FeatureLock titulo="Importación Masiva" descripcion="Sube Excel bancario." planRequerido="Empresa" />
               )}
 
-              {/* Historial de Transacciones */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div className="px-4 md:px-6 py-4 border-b border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 flex justify-between items-center">
                   <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Últimos Movimientos</h3>
@@ -231,7 +223,7 @@ export default async function DashboardPage() {
                         <div className={`p-2 rounded-full shrink-0 ${tx.tipo === 'ingreso' ? 'bg-green-100 text-green-600 dark:bg-green-900/20' : 'bg-red-100 text-red-600 dark:bg-red-900/20'}`}>
                           {tx.tipo === 'ingreso' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                         </div>
-                        <div className="min-w-0"> {/* min-w-0 ayuda a que el texto trunque en móviles */}
+                        <div className="min-w-0"> 
                           <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors truncate max-w-[150px] sm:max-w-none">{tx.descripcion}</p>
                           <p className="text-[11px] text-slate-500 font-medium">{new Date(tx.created_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}</p>
                         </div>
@@ -249,7 +241,6 @@ export default async function DashboardPage() {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </main>
@@ -257,13 +248,12 @@ export default async function DashboardPage() {
   )
 }
 
-// Subcomponente KPI
 function KpiCard({ titulo, valor, tipo, subtitulo }: { titulo: string, valor: number, tipo: 'ingreso' | 'gasto' | 'neutro', subtitulo: string }) {
   const color = tipo === 'ingreso' ? 'text-green-600' : tipo === 'gasto' ? 'text-red-500' : 'text-slate-900 dark:text-white';
   const bg = tipo === 'neutro' ? (valor > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700') : '';
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-col justify-between h-full">
       <div>
         <p className={`text-[10px] font-bold uppercase mb-1 ${tipo === 'gasto' ? 'text-red-500' : tipo === 'ingreso' ? 'text-green-600' : 'text-slate-500'}`}>{titulo}</p>
         <p className={`text-2xl font-black truncate ${color}`}>${new Intl.NumberFormat('es-CL').format(Math.round(valor))}</p>
