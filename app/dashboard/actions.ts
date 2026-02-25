@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 
 /**
  * 1. GESTIÓN DE NEGOCIOS (Onboarding)
+ * Esta función crea el espacio de trabajo inicial.
  */
 export async function crearNegocio(formData: FormData) {
   const supabase = await createClient()
@@ -14,13 +15,11 @@ export async function crearNegocio(formData: FormData) {
   if (!user) return redirect('/login')
 
   const nombre = formData.get('nombre') as string
-  // Obtenemos el tipo de perfil del input hidden, si falla ponemos 'personal'
   const tipo_uso = (formData.get('tipo_perfil') as string) || 'personal'
-  
   const saldo_actual = Number(formData.get('saldo_actual'))
   const ingresos_mensuales = Number(formData.get('ingresos_mensuales'))
   
-  // Si estos campos no vienen en el form simplificado, asumimos 0
+  // Campos opcionales para la simulación inicial
   const gastos_fijos = Number(formData.get('gastos_fijos') || 0)
   const gastos_variables = Number(formData.get('gastos_variables') || 0)
 
@@ -29,12 +28,12 @@ export async function crearNegocio(formData: FormData) {
   const { error } = await supabase.from('negocios').insert({
     user_id: user.id,
     nombre,
-    tipo_uso, // Guardamos si es Personal o Empresa
+    tipo_uso, 
     saldo_actual,
     ingresos_mensuales,
     gastos_fijos,
     gastos_variables,
-    plan: 'gratis' // Plan inicial por defecto
+    plan: 'gratis' 
   })
 
   if (error) {
@@ -42,21 +41,27 @@ export async function crearNegocio(formData: FormData) {
     return { error: "No se pudo crear el negocio: " + error.message }
   }
 
-  // Refrescamos y mandamos al dashboard
+  // REVALIDACIÓN CRÍTICA: Limpia todo el caché para reconocer el nuevo negocio
+  revalidatePath('/', 'layout') 
   revalidatePath('/dashboard')
+  
   redirect('/dashboard')
 }
 
+/**
+ * CIERRE DE SESIÓN
+ */
 export async function cerrarSesion() {
   const supabase = await createClient()
   await supabase.auth.signOut()
+  
+  // Limpieza total antes de salir
   revalidatePath('/', 'layout') 
-  revalidatePath('/dashboard')
   redirect('/')
 }
 
 /**
- * 2. GESTIÓN DE TRANSACCIONES (Manual - Simplificada)
+ * 2. GESTIÓN DE TRANSACCIONES (Manual)
  */
 export async function agregarTransaccion(formData: FormData) {
   const supabase = await createClient()
@@ -70,17 +75,14 @@ export async function agregarTransaccion(formData: FormData) {
   const negocio_id = formData.get('negocio_id') as string
   const fecha = (formData.get('fecha') as string) || new Date().toISOString()
 
-  // --- LÓGICA DE SIMPLIFICACIÓN ---
-  // Ya no obligamos al usuario a elegir categoría.
-  // Si no viene categoría, asignamos una por defecto según el tipo.
+  // Asignación automática de categoría si viene vacía
   let categoria = formData.get('categoria') as string
-  
   if (!categoria) {
     categoria = tipo === 'ingreso' ? 'Ventas' : 'Operativo'
   }
 
   if (!monto || monto <= 0 || !descripcion) {
-    return { error: 'Datos inválidos. Por favor revisa el monto y la descripción.' }
+    return { error: 'Datos inválidos. Revisa el monto y la descripción.' }
   }
 
   const { error } = await supabase.from('transacciones').insert({
@@ -89,8 +91,8 @@ export async function agregarTransaccion(formData: FormData) {
     tipo,
     monto,
     descripcion,
-    categoria, // Se guarda la automática o la manual si existiera
-    created_at: fecha // Usamos la fecha del form o la actual
+    categoria,
+    created_at: fecha
   })
 
   if (error) {
@@ -110,7 +112,6 @@ export async function importarMasivo(negocioId: string, datosExcel: any[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Usuario no autenticado' };
 
-  // Mapeo inteligente para detectar columnas de cualquier Excel
   const transaccionesLimpias = datosExcel.map((fila) => {
     let concepto = 'Sin descripción';
     let monto = 0;
@@ -135,7 +136,6 @@ export async function importarMasivo(negocioId: string, datosExcel: any[]) {
       descripcion: concepto,
       monto: Math.abs(monto || 0),
       tipo: tipoFinal,
-      // Asignamos categoría automática también en el Excel
       categoria: tipoFinal === 'ingreso' ? 'Ventas' : 'Operativo'
     };
   });

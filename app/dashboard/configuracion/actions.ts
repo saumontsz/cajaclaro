@@ -2,82 +2,62 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 /**
- * 1. ACTUALIZAR NOMBRE DEL NEGOCIO
+ * CREAR NEGOCIO INICIAL (Onboarding)
  */
-export async function actualizarNegocio(formData: FormData) {
+export async function crearNegocio(formData: FormData) {
   const supabase = await createClient()
+  
+  // 1. Obtener el usuario autenticado (ej: vía Google)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "No se encontró una sesión activa." }
+
+  // 2. Extraer datos del formulario
   const nombre = formData.get('nombre') as string
-  const negocioId = formData.get('negocio_id') as string
+  const saldo_actual = Number(formData.get('saldo_actual'))
+  const ingresos_mensuales = Number(formData.get('ingresos_mensuales'))
+  const tipo_perfil = formData.get('tipo_perfil') as string
 
-  if (!nombre || !negocioId) return { error: 'Faltan datos' }
+  if (!nombre) return { error: "El nombre es obligatorio." }
 
-  const { error } = await supabase
+  // 3. Insertar el negocio
+  // Se incluye 'tipo_uso' para evitar el error de columna faltante
+  const { data: nuevoNegocio, error: insertError } = await supabase
     .from('negocios')
-    .update({ nombre })
-    .eq('id', negocioId)
-
-  if (error) return { error: 'Error actualizando negocio: ' + error.message }
-  
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/configuracion')
-  return { success: 'Nombre actualizado correctamente' }
-}
-
-/**
- * 2. CANCELAR SUSCRIPCIÓN (Lógica Netflix)
- * No cambia el plan a gratis inmediato, solo cancela la renovación.
- */
-export async function cancelarPlan(negocioId: string) {
-  const supabase = await createClient()
-  
-  // 1. Buscamos tu columna 'fecha_expiracion' para saber hasta cuándo tiene acceso
-  const { data: negocio } = await supabase
-    .from('negocios')
-    .select('fecha_expiracion') 
-    .eq('id', negocioId)
+    .insert([
+      { 
+        user_id: user.id, 
+        nombre, 
+        saldo_actual, 
+        ingresos_mensuales,
+        plan: 'gratis',
+        tipo_uso: tipo_perfil 
+      }
+    ])
+    .select()
     .single()
 
-  // Si no tiene fecha (ej. es un demo nuevo), le damos 30 días para no romper la lógica visual
-  let fechaFin = negocio?.fecha_expiracion
-  if (!fechaFin) {
-    const hoy = new Date()
-    hoy.setDate(hoy.getDate() + 30)
-    fechaFin = hoy.toISOString()
+  if (insertError) {
+    console.error("Error al crear negocio:", insertError.message)
+    return { error: `Error de base de datos: ${insertError.message}` }
   }
 
-  // 2. Actualizamos el estado y aseguramos la fecha
-  // Es vital que tengas la columna 'estado_suscripcion' en tu tabla
-  const { error } = await supabase
-    .from('negocios')
-    .update({ 
-      estado_suscripcion: 'cancelada', 
-      fecha_expiracion: fechaFin       
-    })
-    .eq('id', negocioId)
-
-  if (error) return { error: 'No se pudo cancelar el plan: ' + error.message }
-
+  // 4. LIMPIEZA CRÍTICA DE CACHÉ
+  // revalidatePath('/', 'layout') obliga a Next.js a refrescar todos los permisos
+  revalidatePath('/', 'layout')
   revalidatePath('/dashboard')
-  revalidatePath('/dashboard/configuracion')
-  return { success: 'La renovación automática ha sido desactivada.' }
+
+  // 5. Redirección final
+  redirect('/dashboard')
 }
 
 /**
- * 3. CAMBIAR CONTRASEÑA
+ * CERRAR SESIÓN (Salida de emergencia)
  */
-export async function actualizarPassword(formData: FormData) {
+export async function cerrarSesion() {
   const supabase = await createClient()
-  const password = formData.get('password') as string
-  const confirm = formData.get('confirm_password') as string
-
-  if (password !== confirm) return { error: 'Las contraseñas no coinciden' }
-  if (password.length < 6) return { error: 'La contraseña es muy corta (mínimo 6 caracteres)' }
-
-  const { error } = await supabase.auth.updateUser({ password })
-
-  if (error) return { error: error.message }
-  
-  return { success: 'Contraseña actualizada correctamente' }
+  await supabase.auth.signOut()
+  redirect('/login')
 }
