@@ -1,55 +1,58 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    // 1. OBTENER DATOS Y API KEY
     const body = await request.json()
-    const apiKey = request.headers.get('x-api-key') // La clave que envías desde el header
+    const apiKey = request.headers.get('x-api-key')
 
     if (!apiKey) {
       return NextResponse.json({ error: 'Falta la cabecera x-api-key' }, { status: 401 })
     }
 
-    // 2. VALIDAR LA LLAVE EN SUPABASE
-    const supabase = await createClient()
+    // --- CAMBIO IMPORTANTE AQUÍ ---
+    // Usamos createClient directo con la SERVICE_ROLE_KEY para saltarnos las reglas RLS
+    // Esto nos permite buscar en la tabla 'negocios' aunque no haya usuario logueado.
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
-    // Buscamos el negocio dueño de esta API Key
-    const { data: negocio, error: errorBusqueda } = await supabase
+    // Buscamos el negocio con el cliente ADMIN
+    const { data: negocio, error: errorBusqueda } = await supabaseAdmin
       .from('negocios')
       .select('id, user_id')
       .eq('api_key', apiKey)
       .single()
 
     if (errorBusqueda || !negocio) {
+      console.error("Error buscando negocio:", errorBusqueda)
       return NextResponse.json({ error: 'API Key inválida o negocio no encontrado' }, { status: 403 })
     }
 
-    // 3. VALIDAR DATOS MÍNIMOS
     const { monto, descripcion, tipo } = body
 
     if (!monto || !descripcion) {
       return NextResponse.json({ error: 'Faltan datos obligatorios: monto y descripcion' }, { status: 400 })
     }
 
-    // 4. GUARDAR LA TRANSACCIÓN
-    const { error: errorInsercion } = await supabase
+    // Guardamos la transacción usando también el cliente Admin
+    const { error: errorInsercion } = await supabaseAdmin
       .from('transacciones')
       .insert({
         negocio_id: negocio.id,
-        user_id: negocio.user_id, // Usamos el ID del dueño de la API Key
+        user_id: negocio.user_id,
         monto: Number(monto),
         descripcion: descripcion,
-        tipo: tipo === 'gasto' ? 'gasto' : 'ingreso', // Por defecto ingreso si no especifican
-        categoria: 'API Externa', // Categoría automática para identificar estos movimientos
+        tipo: tipo === 'gasto' ? 'gasto' : 'ingreso',
+        categoria: 'API Externa',
         created_at: new Date().toISOString()
       })
 
     if (errorInsercion) {
-      return NextResponse.json({ error: 'Error al guardar en base de datos: ' + errorInsercion.message }, { status: 500 })
+      return NextResponse.json({ error: 'Error al guardar: ' + errorInsercion.message }, { status: 500 })
     }
 
-    // 5. ÉXITO
     return NextResponse.json({ 
       success: true, 
       message: 'Transacción creada exitosamente',
@@ -57,6 +60,6 @@ export async function POST(request: Request) {
     }, { status: 201 })
 
   } catch (error) {
-    return NextResponse.json({ error: 'Error procesando la solicitud (JSON inválido)' }, { status: 400 })
+    return NextResponse.json({ error: 'Error procesando solicitud' }, { status: 400 })
   }
 }
