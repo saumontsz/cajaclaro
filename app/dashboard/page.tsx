@@ -196,7 +196,10 @@ export default async function DashboardPage() {
           {/* COLUMNA DERECHA */}
           <div className="xl:col-span-8 space-y-6">
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-800 p-4 md:p-6 shadow-sm overflow-hidden">
-               <GraficosFinancieros transacciones={txs} />
+               <GraficosFinancieros 
+                  transacciones={txs} 
+                  metaMensual={Number(negocio.ingresos_mensuales || 0)} // Pasamos la meta real
+                />
             </div>
 
             <div className="space-y-4">
