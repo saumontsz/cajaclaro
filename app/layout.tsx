@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Flujent | Inteligencia Financiera",
   description: "Proyecciones financieras para microemprendedores",
   icons: {
-    icon: '/favicon.ico', // O '/icon.png' si es una imagen PNG
+    icon: '/favicon.ico', 
   },
 };
 
