@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { LayoutDashboard, Loader2, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client' 
 
-// Botón de Google (Reutilizable)
+// Botón de Google (Componente Interno)
 function GoogleRegisterButton({ disabled }: { disabled: boolean }) {
   const [loadingGoogle, setLoadingGoogle] = useState(false)
 
@@ -53,7 +53,7 @@ function RegisterContent() {
       </Link>
 
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center bg-blue-600 w-12 h-12 rounded-xl shadow-lg shadow-blue-600/20 mb-4">
+        <div className="inline-flex items-center justify-center bg-blue-600 w-12 h-12 rounded-xl shadow-lg shadow-blue-600/20 mb-4 hover:scale-105 transition-transform">
           <LayoutDashboard className="text-white" size={24} />
         </div>
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -66,12 +66,18 @@ function RegisterContent() {
 
       <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800 transition-colors">
         
-        {/* El botón ahora es el protagonista absoluto */}
         <div className="flex flex-col gap-4">
           <GoogleRegisterButton disabled={false} />
           
-          <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-2">
-            Al registrarte, aceptas nuestros <span className="underline cursor-pointer">Términos</span> y <span className="underline cursor-pointer">Privacidad</span>.
+          <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-2 leading-relaxed">
+            Al registrarte, aceptas nuestros{' '}
+            <Link href="/terms" className="underline hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              Términos y Condiciones
+            </Link> 
+            {' y '}
+            <Link href="/privacy" className="underline hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              Política de Privacidad
+            </Link>.
           </p>
         </div>
 
