@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Flujent | Inteligencia Financiera",
   description: "Proyecciones financieras para microemprendedores",
+  icons: {
+    icon: '/icon.png', // O '/icon.png' si es una imagen PNG
+  },
 };
 
 export default function RootLayout({
