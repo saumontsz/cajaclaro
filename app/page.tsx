@@ -373,7 +373,8 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-2 mb-4 text-slate-900 dark:text-white font-bold">
            <Activity size={20} /> Flujent
         </div>
-        <p className="text-slate-500 dark:text-slate-600 text-sm">© {new Date().getFullYear()} Flujent. Hecho en Chile para emprendedores con visión.</p>
+       <p className="text-slate-500 dark:text-slate-600 text-sm">© {new Date().getFullYear()} Flujent. Hecho en Chile para emprendedores con visión.</p>
+       <a href="/privacy">Política de Privacidad</a>
       </footer>
     </div>
   )
