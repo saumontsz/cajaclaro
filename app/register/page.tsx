@@ -2,10 +2,9 @@
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, Loader2, ArrowLeft } from 'lucide-react'
+import { Activity, Loader2, ArrowLeft } from 'lucide-react' // 🚀 Usamos Activity para el logo
 import { createClient } from '@/utils/supabase/client' 
 
-// Botón de Google (Componente Interno)
 function GoogleRegisterButton({ disabled }: { disabled: boolean }) {
   const [loadingGoogle, setLoadingGoogle] = useState(false)
 
@@ -48,14 +47,19 @@ function GoogleRegisterButton({ disabled }: { disabled: boolean }) {
 function RegisterContent() {
   return (
     <div className="w-full max-w-sm">
-      <Link href="/login" className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mb-8 transition-colors pl-1 group">
-        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Volver al login
+      <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 mb-8 transition-colors pl-1 group">
+        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Volver al inicio
       </Link>
 
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center bg-blue-600 w-12 h-12 rounded-xl shadow-lg shadow-blue-600/20 mb-4 hover:scale-105 transition-transform">
-          <LayoutDashboard className="text-white" size={24} />
+        {/* 🚀 LOGO DE FLUJENT */}
+        <div className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-500 font-bold text-2xl group mb-4">
+          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
+             <Activity className="text-white" size={24} />
+          </div>
+          <span>Flujent</span>
         </div>
+
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
           Crea tu cuenta gratis
         </h1>

@@ -1,58 +1,63 @@
-// app/checkout/BotonWebpay.tsx
 'use client'
 
-import { useState } from 'react';
-import { CreditCard, Loader2 } from 'lucide-react';
-import { iniciarPagoWebpay } from './webpay-actions';
+import { useState } from 'react'
+import { iniciarPagoWebpay } from './webpay-actions'
+import { CreditCard, Loader2 } from 'lucide-react'
 
-interface Props {
-  plan: string;
-  ciclo: string;
-  monto: number;
-  negocioId: string;
-}
-
-export default function BotonWebpay({ plan, ciclo, monto, negocioId }: Props) {
-  const [cargando, setCargando] = useState(false);
+export default function BotonWebpay({ plan, ciclo }: { plan: string, ciclo: string }) {
+  const [loading, setLoading] = useState(false)
 
   const handlePago = async () => {
-    setCargando(true);
+    console.log("🖱️ Botón presionado en el cliente");
+    setLoading(true);
+    
     try {
-      // 1. Pedimos el token y la URL a Transbank
-      const { url, token } = await iniciarPagoWebpay(plan, ciclo, monto, negocioId);
+      const res = await iniciarPagoWebpay(plan, ciclo);
+      console.log("📥 Resultado desde el servidor:", res);
 
-      // 2. Creamos un formulario invisible en el navegador y lo enviamos a Webpay
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = url;
+      if (res.success && res.url && res.token) {
+        console.log("🛠️ Creando formulario POST...");
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = res.url;
 
-      const tokenInput = document.createElement('input');
-      tokenInput.type = 'hidden';
-      tokenInput.name = 'token_ws';
-      tokenInput.value = token;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'token_ws';
+        input.value = res.token;
 
-      form.appendChild(tokenInput);
-      document.body.appendChild(form);
-      form.submit();
-      
-    } catch (error) {
-      console.error(error);
-      setCargando(false);
-      alert('Error al conectar con Webpay. Intenta nuevamente.');
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+      } else {
+        alert("Error: " + (res.error || "Respuesta del servidor inválida"));
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("❌ Error fatal en el cliente:", err);
+      alert("Error de conexión. Revisa la consola del navegador.");
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <button 
       onClick={handlePago}
-      disabled={cargando}
-      className="w-full py-5 px-6 bg-rose-600 hover:bg-rose-500 disabled:bg-rose-400 text-white text-lg font-black rounded-2xl transition-all shadow-xl shadow-rose-600/20 flex justify-center items-center gap-3 group active:scale-[0.98]"
+      disabled={loading}
+      className={`w-full py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-3 active:scale-95 disabled:opacity-70 
+        ${loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'}`}
     >
-      {cargando ? (
-        <><Loader2 size={20} className="animate-spin" /> Conectando con Transbank...</>
+      {loading ? (
+        <>
+          <Loader2 className="animate-spin" size={20} />
+          Conectando...
+        </>
       ) : (
-        <>Pagar con Webpay <CreditCard size={20} className="group-hover:scale-110 transition-transform" /></>
+        <>
+          <CreditCard size={20} />
+          Pagar con Webpay Plus
+        </>
       )}
     </button>
-  );
+  )
 }

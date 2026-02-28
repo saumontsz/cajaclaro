@@ -1,207 +1,252 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { TrendingDown, AlertTriangle, ShieldCheck, HelpCircle, Activity, BrainCircuit } from 'lucide-react'
+import { 
+  AlertTriangle, ShieldCheck, Activity, BrainCircuit, 
+  TrendingDown, DollarSign, Sparkles 
+} from 'lucide-react'
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, Legend
+} from 'recharts'
 
-// Definimos la estructura de la transacción que viene de la base de datos
 interface Transaccion {
   monto: number;
   tipo: string;
   created_at: string;
+  categoria?: string;
 }
 
 interface Props {
   negocio: {
     saldo_actual: number;
-    // Mantenemos estos por si no hay historial suficiente (fallback)
     ingresos_mensuales: number; 
     gastos_fijos: number;
     gastos_variables: number;
+    nombre: string;
   };
-  transacciones: Transaccion[]; // <--- AHORA RECIBIMOS EL HISTORIAL
+  transacciones: Transaccion[];
 }
 
 const formatoCLP = (valor: number) => {
   return new Intl.NumberFormat('es-CL').format(Math.round(valor));
 };
 
+// 🚀 Formateador inteligente para el Eje Y
+const formatYAxis = (value: number) => {
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
+  return `$${value}`;
+};
+
 export default function Simulador({ negocio, transacciones }: Props) {
   const [porcentajeCaida, setPorcentajeCaida] = useState(20)
 
-  // --- LÓGICA INTELIGENTE: PROCESAMIENTO DE HISTORIAL ---
   const datosInteligentes = useMemo(() => {
     const ahora = new Date();
-    // Filtramos solo los últimos 6 meses para que el dato sea fresco
     const seisMesesAtras = new Date();
     seisMesesAtras.setMonth(ahora.getMonth() - 6);
 
     const txRecientes = transacciones.filter(t => new Date(t.created_at) >= seisMesesAtras);
 
-    // Si no hay datos suficientes (menos de 2 movimientos), usamos el perfil estático
     if (txRecientes.length < 2) {
       return {
         ingresoPromedio: negocio.ingresos_mensuales || 0,
-        gastoPromedio: (negocio.gastos_fijos || 0) + (negocio.gastos_variables || 0),
-        esBasadoEnHistorial: false
+        gastoFijoPromedio: negocio.gastos_fijos || 0,
+        gastoVariablePromedio: negocio.gastos_variables || 0,
       };
     }
 
-    // Agrupamos por mes (clave: "2023-10")
-    const ingresosPorMes: Record<string, number> = {};
-    const gastosPorMes: Record<string, number> = {};
-    const mesesUnicos = new Set<string>();
+    let totalIngresos = 0;
+    let sumaGastosFijosManual = 0;
+    let sumaGastosVariablesManual = 0;
+    let sumaGastosSinClasificar = 0;
+    let fechaMasAntigua = ahora.getTime();
+
+    const CATEGORIAS_FIJAS = ['arriendo', 'sueldo', 'software', 'internet', 'seguro', 'servicios básicos', 'oficina', 'suscrip'];
+    const CATEGORIAS_VARIABLES = ['marketing', 'publicidad', 'proveedor', 'comision', 'impuesto', 'mantenimiento', 'materia prima', 'logistica', 'envio'];
 
     txRecientes.forEach(tx => {
-      const fecha = new Date(tx.created_at);
-      const claveMes = `${fecha.getFullYear()}-${fecha.getMonth()}`;
-      mesesUnicos.add(claveMes);
+      const fechaTx = new Date(tx.created_at).getTime();
+      if (fechaTx < fechaMasAntigua) fechaMasAntigua = fechaTx;
+      const monto = Number(tx.monto);
+      const cat = (tx.categoria || '').toLowerCase();
 
       if (tx.tipo === 'ingreso') {
-        ingresosPorMes[claveMes] = (ingresosPorMes[claveMes] || 0) + Number(tx.monto);
+        totalIngresos += monto;
       } else {
-        gastosPorMes[claveMes] = (gastosPorMes[claveMes] || 0) + Number(tx.monto);
+        const esFijo = CATEGORIAS_FIJAS.some(f => cat.includes(f));
+        const esVariable = CATEGORIAS_VARIABLES.some(v => cat.includes(v));
+        if (esFijo) sumaGastosFijosManual += monto;
+        else if (esVariable) sumaGastosVariablesManual += monto;
+        else sumaGastosSinClasificar += monto;
       }
     });
 
-    const cantidadMeses = mesesUnicos.size || 1; // Evitar división por cero
+    const msPorMes = 1000 * 60 * 60 * 24 * 30.44;
+    const mesesParaPromedio = Math.min(6, Math.max(1, (ahora.getTime() - fechaMasAntigua) / msPorMes));
 
-    // Calculamos promedios reales
-    const totalIngresos = Object.values(ingresosPorMes).reduce((a, b) => a + b, 0);
-    const totalGastos = Object.values(gastosPorMes).reduce((a, b) => a + b, 0);
+    const totalG_Clasificados = sumaGastosFijosManual + sumaGastosVariablesManual;
+    const ratioFijoReal = sumaGastosFijosManual / (totalG_Clasificados || 1);
+    const gastoTotalPromedio = (totalG_Clasificados + sumaGastosSinClasificar) / mesesParaPromedio;
 
     return {
-      ingresoPromedio: totalIngresos / cantidadMeses,
-      gastoPromedio: totalGastos / cantidadMeses,
-      esBasadoEnHistorial: true,
-      mesesAnalizados: cantidadMeses
+      ingresoPromedio: totalIngresos / mesesParaPromedio,
+      gastoFijoPromedio: gastoTotalPromedio * ratioFijoReal,
+      gastoVariablePromedio: gastoTotalPromedio * (1 - ratioFijoReal),
     };
   }, [transacciones, negocio]);
 
-
-  // --- SIMULACIÓN SOBRE LOS DATOS INTELIGENTES ---
   const analisis = useMemo(() => {
-    const { ingresoPromedio, gastoPromedio } = datosInteligentes;
+    const { ingresoPromedio, gastoFijoPromedio, gastoVariablePromedio } = datosInteligentes;
+    const multiplicadorVentas = 1 - (porcentajeCaida / 100);
     
-    // Aplicamos la caída al PROMEDIO REAL
-    const nuevosIngresos = ingresoPromedio * (1 - (porcentajeCaida / 100));
-    const flujoNeto = nuevosIngresos - gastoPromedio;
+    const nuevosIngresos = ingresoPromedio * multiplicadorVentas;
+    const nuevosGastosVariables = gastoVariablePromedio * multiplicadorVentas;
+    const nuevoGastoTotal = gastoFijoPromedio + nuevosGastosVariables;
+    const flujoNeto = nuevosIngresos - nuevoGastoTotal;
 
-    // Escenario A: Superávit
-    if (flujoNeto >= 0) {
-      return {
-        meses: 'Indefinido',
-        estado: 'safe',
-        mensaje: 'Tu estructura de costos es ligera.',
-        detalle: `Tu promedio real de gastos es bajo ($${formatoCLP(gastoPromedio)}). Incluso vendiendo un ${porcentajeCaida}% menos, sigues en verde.`,
-        consejo: 'Excelente resistencia. Considera invertir el excedente para crecer más rápido.'
-      };
-    }
-
-    // Escenario B: Déficit
+    const esSafe = flujoNeto >= 0;
     const deficitMensual = Math.abs(flujoNeto);
-    const mesesVida = negocio.saldo_actual > 0 
-      ? (negocio.saldo_actual / deficitMensual).toFixed(1) 
-      : "0.0";
-    
-    const esCritico = Number(mesesVida) < 3;
+    const mesesVida = negocio.saldo_actual > 0 ? (negocio.saldo_actual / deficitMensual).toFixed(1) : "0.0";
+    const esCritico = Number(mesesVida) < 3 && !esSafe;
+
+    const chartData = [
+      {
+        name: 'Actualidad',
+        Ingresos: Math.round(ingresoPromedio),
+        'G. Variables': Math.round(gastoVariablePromedio),
+        'G. Fijos': Math.round(gastoFijoPromedio),
+      },
+      {
+        name: `Estrés (-${porcentajeCaida}%)`,
+        Ingresos: Math.round(nuevosIngresos),
+        'G. Variables': Math.round(nuevosGastosVariables),
+        'G. Fijos': Math.round(gastoFijoPromedio),
+      }
+    ];
 
     return {
-      meses: `${mesesVida} meses`,
-      estado: esCritico ? 'critical' : 'warning',
-      mensaje: `Quemarías caja a ritmo de $${formatoCLP(deficitMensual)}/mes.`,
-      detalle: `Basado en tu comportamiento real de los últimos meses, tu saldo actual ($${formatoCLP(negocio.saldo_actual)}) te da ${mesesVida} meses de oxígeno.`,
-      consejo: esCritico 
-        ? 'ALERTA ROJA: Tus gastos fijos reales son muy altos para este escenario. Corta costos no esenciales hoy mismo.' 
-        : 'PRECAUCIÓN: Tienes tiempo, pero no te confíes. Empieza a renegociar con proveedores o busca nuevas fuentes de ingreso.'
+      flujoNeto,
+      chartData,
+      meses: esSafe ? 'Indefinido' : `${mesesVida} meses`,
+      estado: esSafe ? 'safe' : esCritico ? 'critical' : 'warning',
+      mensaje: esSafe ? 'Estructura robusta.' : `Déficit de -$${formatoCLP(deficitMensual)}/mes.`,
+      detalle: esSafe 
+        ? `Incluso con una caída del ${porcentajeCaida}%, tu flujo sigue positivo (+ $${formatoCLP(flujoNeto)}).`
+        : `Tus ingresos no cubren los gastos fijos. Tienes ${mesesVida} meses de oxígeno con tu saldo actual.`,
     };
-
   }, [datosInteligentes, porcentajeCaida, negocio.saldo_actual]);
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-100 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
+          <p className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">{label}</p>
+          <div className="space-y-1.5">
+            {payload.map((entry: any, index: number) => (
+              <div key={index} className="flex justify-between gap-8 text-xs font-bold">
+                <span style={{ color: entry.color }}>{entry.name}:</span>
+                <span className="text-slate-900 dark:text-white">${formatoCLP(entry.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm mt-8 transition-colors">
+    <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-gray-100 dark:border-slate-800/60 shadow-sm mt-8 transition-all">
       
-      {/* HEADER CON INDICADOR DE INTELIGENCIA */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-purple-50 dark:bg-purple-900/20 p-2.5 rounded-xl">
-            <BrainCircuit className="text-purple-600 dark:text-purple-400" size={24} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Simulador IA</h3>
-            <p className="text-sm text-gray-500 dark:text-slate-400">
-              Proyección basada en tu historial real.
-            </p>
-          </div>
+      <div className="flex items-center gap-4 mb-10">
+        <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-2xl">
+          <BrainCircuit className="text-purple-600 dark:text-purple-400" size={24} />
         </div>
-        {datosInteligentes.esBasadoEnHistorial && (
-          <span className="text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full font-bold uppercase tracking-wide">
-            Analizando {datosInteligentes.mesesAnalizados} meses
-          </span>
-        )}
+        <div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            Simulador de Estrés IA
+            <Sparkles size={16} className="text-purple-400 animate-pulse" />
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Predicción de supervivencia ante crisis de mercado.</p>
+        </div>
       </div>
 
-      <div className="space-y-8">
-        {/* SLIDER */}
-        <div>
-          <div className="flex justify-between text-sm font-medium mb-4 text-gray-600 dark:text-slate-300">
-            <span>Si tus ingresos promedio caen un...</span>
-            <span className="text-gray-900 dark:text-white font-black text-2xl">{porcentajeCaida}%</span>
-          </div>
-          
-          <div className="relative w-full h-6 flex items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        <div className="lg:col-span-5 space-y-8">
+          <div className="bg-slate-50/50 dark:bg-slate-800/20 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50">
+            <div className="flex justify-between items-end mb-6">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Caída de Ventas</span>
+              <span className="text-purple-600 dark:text-purple-400 font-black text-4xl">-{porcentajeCaida}%</span>
+            </div>
             <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              step="5"
-              value={porcentajeCaida}
+              type="range" min="0" max="100" step="5" value={porcentajeCaida}
               onChange={(e) => setPorcentajeCaida(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600 dark:accent-purple-500 z-10"
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-600 mb-4"
             />
+            <div className="flex justify-between text-[9px] text-slate-400 font-black uppercase">
+              <span>Actual</span>
+              <span>Crisis Total</span>
+            </div>
           </div>
-          <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-500 mt-1 font-bold uppercase tracking-wider">
-            <span>Actualidad</span>
-            <span>Crisis Total</span>
+
+          <div className={`p-6 rounded-[32px] border-2 transition-all duration-500 ${
+            analisis.estado === 'safe' ? 'bg-emerald-50/30 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20' : 
+            'bg-rose-50/30 border-rose-100 dark:bg-rose-500/5 dark:border-rose-500/20'
+          }`}>
+            <div className="flex items-center gap-4 mb-4">
+              {analisis.estado === 'safe' ? <ShieldCheck className="text-emerald-500" size={32} /> : <AlertTriangle className="text-rose-500" size={32} />}
+              <div>
+                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Supervivencia (Runway)</span>
+                <span className={`text-3xl font-black ${analisis.estado === 'safe' ? 'text-emerald-600' : 'text-rose-600'}`}>{analisis.meses}</span>
+              </div>
+            </div>
+            <p className="text-slate-700 dark:text-slate-300 text-sm font-bold mb-2">{analisis.mensaje}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{analisis.detalle}</p>
           </div>
         </div>
 
-        {/* TARJETA DE RESULTADOS */}
-        <div className={`p-6 rounded-2xl border transition-all duration-300 ${
-          analisis.estado === 'safe' 
-            ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-500/20' 
-            : analisis.estado === 'warning' 
-              ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-500/20' 
-              : 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-500/20'
-        }`}>
-          <div className="flex items-center gap-2 mb-4">
-            {analisis.estado === 'safe' 
-              ? <ShieldCheck className="text-green-600 dark:text-green-400" size={24} /> 
-              : <AlertTriangle className={analisis.estado === 'critical' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'} size={24} />
-            }
-            <div>
-              <span className={`block text-xs font-bold uppercase ${
-                  analisis.estado === 'safe' ? 'text-green-600 dark:text-green-400' : 
-                  analisis.estado === 'warning' ? 'text-yellow-600 dark:text-yellow-400' : 
-                  'text-red-600 dark:text-red-400'
-              }`}>Runway Estimado</span>
-              <span className={`font-black text-2xl ${
-                  analisis.estado === 'safe' ? 'text-green-800 dark:text-green-200' : 
-                  analisis.estado === 'warning' ? 'text-yellow-800 dark:text-yellow-200' : 
-                  'text-red-800 dark:text-red-200'
-              }`}>{analisis.meses}</span>
+        <div className="lg:col-span-7 flex flex-col h-full">
+          <div className="flex justify-between items-center mb-8">
+            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Activity size={14} className="text-emerald-500" /> Proyección de Flujo
+            </h4>
+            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${analisis.flujoNeto >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+              Neto: {analisis.flujoNeto >= 0 ? '+' : '-'}${formatoCLP(Math.abs(analisis.flujoNeto))}
             </div>
           </div>
-          
-          <p className="text-gray-800 dark:text-slate-200 text-sm mb-2 font-bold">{analisis.mensaje}</p>
-          <p className="text-gray-600 dark:text-slate-400 text-xs mb-5 leading-relaxed">{analisis.detalle}</p>
 
-          <div className="bg-white dark:bg-slate-950/50 p-4 rounded-xl flex gap-3 items-start border border-gray-100 dark:border-slate-800">
-            <Activity size={18} className="text-purple-500 shrink-0 mt-0.5" />
-            <div>
-              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase block mb-1">Estrategia Recomendada</span>
-              <p className="text-sm text-gray-700 dark:text-slate-300 font-medium leading-snug">{analisis.consejo}</p>
-            </div>
+          <div className="flex-1 min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              {/* 🛠️ AJUSTE: Aumentamos el margen izquierdo para etiquetas largas */}
+              <BarChart data={analisis.chartData} margin={{ top: 0, right: 0, left: 20, bottom: 0 }} barGap={12}>
+                <defs>
+                  <linearGradient id="gradSafe" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" /><stop offset="100%" stopColor="#059669" /></linearGradient>
+                  <linearGradient id="gradVar" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fb923c" /><stop offset="100%" stopColor="#f97316" /></linearGradient>
+                  <linearGradient id="gradFix" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f43f5e" /><stop offset="100%" stopColor="#e11d48" /></linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#94a3b8" opacity={0.1} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 800 }} dy={10} />
+                
+                {/* 🛠️ AJUSTE: Definimos ancho fijo y formateador inteligente */}
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} 
+                  width={65} 
+                  tickFormatter={formatYAxis} 
+                />
+                
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.05)' }} />
+                <Legend verticalAlign="top" align="right" height={40} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }} />
+                
+                <Bar dataKey="Ingresos" fill="url(#gradSafe)" radius={[8, 8, 0, 0]} maxBarSize={45} />
+                <Bar dataKey="G. Variables" stackId="g" fill="url(#gradVar)" maxBarSize={45} />
+                <Bar dataKey="G. Fijos" stackId="g" fill="url(#gradFix)" radius={[8, 8, 0, 0]} maxBarSize={45} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

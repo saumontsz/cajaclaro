@@ -1,15 +1,24 @@
-import Link from 'next/link'
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 
 export default function PrivacyPage() {
+  const router = useRouter()
+
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 transition-colors">
       <div className="max-w-3xl mx-auto">
         
         <div className="mb-8">
-          <Link href="/register" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white transition-colors mb-6">
-            <ArrowLeft size={16} /> Volver al registro
-          </Link>
+          {/* 🚀 BOTÓN INTELIGENTE: Regresa a la página anterior real */}
+          <button 
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white transition-colors mb-6"
+          >
+            <ArrowLeft size={16} /> Volver a la página anterior
+          </button>
+
           <div className="flex items-center gap-3 mb-2">
             <div className="bg-green-600 p-2 rounded-lg">
               <ShieldCheck className="text-white" size={24} />
@@ -32,9 +41,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">2. Uso de la Información</h2>
-            <p>
-              Solo usamos tus datos para:
-            </p>
+            <p>Solo usamos tus datos para:</p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
               <li>Proporcionarte el servicio de dashboards y cálculos.</li>
               <li>Autenticar tu identidad.</li>

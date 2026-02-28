@@ -1,15 +1,24 @@
-import Link from 'next/link'
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ScrollText } from 'lucide-react'
 
 export default function TermsPage() {
+  const router = useRouter()
+
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 transition-colors">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
+        
         <div className="mb-8">
-          <Link href="/register" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white transition-colors mb-6">
-            <ArrowLeft size={16} /> Volver al registro
-          </Link>
+          {/* 🚀 BOTÓN INTELIGENTE: Regresa a la página anterior real */}
+          <button 
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-white transition-colors mb-6"
+          >
+            <ArrowLeft size={16} /> Volver a la página anterior
+          </button>
+
           <div className="flex items-center gap-3 mb-2">
             <div className="bg-blue-600 p-2 rounded-lg">
               <ScrollText className="text-white" size={24} />
@@ -19,7 +28,6 @@ export default function TermsPage() {
           <p className="text-slate-500 dark:text-slate-400">Última actualización: Febrero 2026</p>
         </div>
 
-        {/* Contenido Legal */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 space-y-6 leading-relaxed">
           
           <section>

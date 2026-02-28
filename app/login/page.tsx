@@ -3,8 +3,8 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Loader2, AlertCircle } from 'lucide-react'
-import { login } from './actions' // Asegúrate de que login esté aquí
+import { Activity, Loader2, AlertCircle } from 'lucide-react'
+import { login } from './actions' 
 import { createClient } from '@/utils/supabase/client' 
 
 function GoogleButton({ disabled }: { disabled: boolean }) {
@@ -27,7 +27,6 @@ function GoogleButton({ disabled }: { disabled: boolean }) {
       type="button"
       onClick={handleGoogleLogin}
       disabled={disabled || loadingGoogle}
-      // CORRECCIÓN DARK MODE: Fondos oscuros y bordes sutiles
       className="w-full py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 rounded-2xl font-bold text-sm text-slate-700 dark:text-white transition-all flex items-center justify-center gap-3 relative overflow-hidden group active:scale-[0.99] shadow-sm"
     >
       {loadingGoogle ? (
@@ -62,19 +61,23 @@ function LoginForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="text-center mb-8">
-        <Link href="/" className="inline-flex items-center justify-center bg-blue-600 w-12 h-12 rounded-xl shadow-lg shadow-blue-600/20 mb-4 hover:scale-105 transition-transform">
-          <LayoutDashboard className="text-white" size={24} />
+        {/* LOGO DE FLUJENT */}
+        <Link href="/" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-500 font-bold text-2xl group mb-4">
+          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
+             <Activity className="text-white" size={24} />
+          </div>
+          <span>Flujent</span>
         </Link>
+        
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          Bienvenido a Flujent
+          Bienvenido de vuelta
         </h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
           Inicia sesión para gestionar tu negocio.
         </p>
       </div>
 
-      {/* CORRECCIÓN DARK MODE: Tarjeta con fondo oscuro y bordes adaptados */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 transition-colors">
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800 transition-colors">
         
         <div className="mb-6">
           <GoogleButton disabled={loading} />
@@ -91,10 +94,9 @@ function LoginForm() {
           </div>
         </div>
 
-        <form className="flex flex-col gap-4">
+        <form action={handleEmailLogin} className="flex flex-col gap-4">
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 ml-1">Correo electrónico</label>
-            {/* CORRECCIÓN DARK MODE: Inputs oscuros con texto claro */}
             <input 
               name="email" 
               type="email" 
@@ -127,21 +129,21 @@ function LoginForm() {
           )}
           
           <div className="flex flex-col gap-3 mt-2">
+            {/* 🚀 BOTÓN AHORA ES AZUL (bg-blue-600) */}
             <button 
-              formAction={handleEmailLogin} 
+              type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700 disabled:opacity-70 text-white font-bold rounded-xl transition-all shadow-lg shadow-slate-900/20 dark:shadow-blue-600/20 active:scale-[0.98] flex justify-center items-center text-sm"
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex justify-center items-center text-sm"
             >
               {loading ? <Loader2 className="animate-spin" size={18} /> : 'Iniciar sesión'}
             </button>
             
             <div className="text-center pt-2">
-              {/* ENLACE REAL A LA PAGINA DE REGISTRO */}
               <Link 
                 href="/register" 
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors font-medium"
               >
-                ¿No tienes cuenta? <span className="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:decoration-slate-500">Regístrate aquí</span>
+                ¿No tienes cuenta? <span className="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:decoration-slate-500 font-bold text-blue-600 dark:text-blue-400">Regístrate aquí</span>
               </Link>
             </div>
           </div>
@@ -149,7 +151,7 @@ function LoginForm() {
       </div>
 
       <p className="mt-8 text-[10px] text-slate-400 dark:text-slate-500 text-center max-w-xs mx-auto leading-relaxed">
-        Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.
+        Al continuar, aceptas nuestros <Link href="/terms" className="underline">Términos de Servicio</Link> y <Link href="/privacy" className="underline">Política de Privacidad</Link>.
       </p>
     </div>
   )
