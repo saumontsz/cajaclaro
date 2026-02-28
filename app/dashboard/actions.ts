@@ -5,7 +5,9 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 /**
- * 🧠 MOTOR DE NORMALIZACIÓN (Anti-duplicados)
+ * ==========================================
+ * 🧠 MOTOR DE NORMALIZACIÓN E INTELIGENCIA
+ * ==========================================
  */
 const normalizar = (nombre: string) => {
   if (!nombre) return "";
@@ -45,7 +47,7 @@ function convertirFechaExcel(excelDate: any) {
 }
 
 /**
- * GESTIÓN DE NEGOCIOS Y CUENTAS
+ * 1. GESTIÓN DE NEGOCIO Y CUENTAS
  */
 export async function crearNegocio(formData: FormData) {
   const supabase = await createClient()
@@ -89,8 +91,10 @@ export async function crearCuentaNueva(negocioId: string, nombre: string, saldo:
   const { count } = await supabase.from('cuentas').select('*', { count: 'exact', head: true }).eq('negocio_id', negocioId);
   const numCuentas = count || 0;
 
-  if ((plan === 'gratis' || plan === 'semilla') && numCuentas >= 1) return { error: 'Plan Gratis: límite 1 cuenta.' };
-  
+  if ((plan === 'gratis' || plan === 'semilla') && numCuentas >= 1) {
+    return { error: 'El plan Gratis permite 1 sola cuenta.' };
+  }
+
   const { error } = await supabase.from('cuentas').insert({
     negocio_id: negocioId, user_id: user.id, nombre, saldo_inicial: saldo, tipo: 'banco'
   });
@@ -101,23 +105,32 @@ export async function crearCuentaNueva(negocioId: string, nombre: string, saldo:
 }
 
 /**
- * IMPORTACIÓN INTELIGENTE (Retorno estandarizado para TS)
+ * 2. IMPORTACIÓN INTELIGENTE (Solución error 'user is null' 🛠️)
  */
 export async function importarMasivo(negocioId: string, datosExcel: any[], cuentaIdForzada?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado', success: false, procesadas: 0, descartadas: [] };
 
+  const userId = user.id; // 🚀 Capturamos el ID en una constante para asegurar el tipo string
+
   const { data: cuentasDB } = await supabase.from('cuentas').select('id, nombre').eq('negocio_id', negocioId);
   const mapaCuentas = new Map<string, string>();
   cuentasDB?.forEach(c => mapaCuentas.set(normalizar(c.nombre), c.id));
 
+  // Sub-función corregida con userId explícito
   async function obtenerOCrearCuenta(nombreBase: string) {
     const nombreNorm = normalizar(nombreBase);
     if (mapaCuentas.has(nombreNorm)) return mapaCuentas.get(nombreNorm);
+
     const { data: nuevaCuenta } = await supabase.from('cuentas').insert({
-      negocio_id: negocioId, user_id: user.id, nombre: nombreBase, saldo_inicial: 0, tipo: 'banco'
+      negocio_id: negocioId, 
+      user_id: userId, // 🚀 Usamos la constante segura
+      nombre: nombreBase, 
+      saldo_inicial: 0, 
+      tipo: 'banco'
     }).select('id').single();
+
     if (nuevaCuenta) mapaCuentas.set(nombreNorm, nuevaCuenta.id);
     return nuevaCuenta?.id;
   }
@@ -132,9 +145,17 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
       const cleanKey = key.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       row[cleanKey] = fila[key];
     }
-    const montoRaw = Number(row.monto || row.valor || row.monto_unico || 0);
+
+    const parseNumber = (val: any) => {
+      if (!val) return 0;
+      if (typeof val === 'number') return val;
+      let str = String(val).trim().replace(/[$]/g, '').replace(/\s/g, ''); 
+      return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+    };
+
+    const montoRaw = parseNumber(row.monto || row.valor || row.monto_unico || 0);
     const tipoTexto = String(row.tipo || '').toLowerCase();
-    const esGasto = tipoTexto.includes('gast') || tipoTexto.includes('egre') || tipoTexto.includes('cargo') || montoRaw < 0;
+    const esGasto = tipoTexto.includes('gast') || tipoTexto.includes('egre') || montoRaw < 0;
 
     if (montoRaw === 0) {
       filasDescartadas.push({ fila: index + 2, motivo: 'Monto cero', datos: fila });
@@ -149,7 +170,7 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
     }
 
     transaccionesLimpias.push({
-      negocio_id: negocioId, user_id: user.id, cuenta_id: idCuentaFila,
+      negocio_id: negocioId, user_id: userId, cuenta_id: idCuentaFila,
       descripcion: String(row.concepto || row.descripcion || 'Importación').substring(0, 200),
       monto: Math.abs(montoRaw), tipo: esGasto ? 'gasto' : 'ingreso',
       categoria: row.categoria || (esGasto ? 'Operativo' : 'Ventas'),
@@ -157,21 +178,13 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
     });
   }
 
-  if (transaccionesLimpias.length === 0) return { error: 'Sin datos válidos', success: false, procesadas: 0, descartadas: filasDescartadas };
-
   const { error } = await supabase.from('transacciones').insert(transaccionesLimpias);
   revalidatePath('/dashboard');
-
-  return { 
-    success: !error, 
-    error: error?.message || null, 
-    procesadas: transaccionesLimpias.length, 
-    descartadas: filasDescartadas 
-  };
+  return error ? { error: error.message, success: false } : { success: true, procesadas: transaccionesLimpias.length, descartadas: filasDescartadas };
 }
 
 /**
- * RECURRENCIA Y OTROS
+ * 3. RECURRENCIA Y TRANSACCIONES
  */
 export async function toggleRecurrente(id: string, estadoActual: string) {
   const supabase = await createClient();
@@ -199,10 +212,14 @@ export async function agregarTransaccion(formData: FormData) {
   return error ? { error: error.message } : { success: true };
 }
 
+/**
+ * 4. HITOS 🎯
+ */
 export async function guardarHito(negocioId: string, nombre: string, costo: number, ahorro: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { error } = await supabase.from('hitos').insert({ user_id: user?.id, negocio_id: negocioId, nombre, costo, ahorro });
+  if (!user) return { error: "No autenticado" };
+  const { error } = await supabase.from('hitos').insert({ user_id: user.id, negocio_id: negocioId, nombre, costo, ahorro });
   revalidatePath('/dashboard');
   return error ? { error: error.message } : { success: true };
 }
@@ -215,12 +232,15 @@ export async function borrarHito(id: string) {
   return { success: true }; 
 }
 
+/**
+ * 5. SESIÓN Y API
+ */
 export async function generarApiKey(negocioId: string) {
   const supabase = await createClient();
   const key = `fluj_live_${Math.random().toString(36).substring(2, 15)}`;
-  await supabase.from('negocios').update({ api_key: key }).eq('id', negocioId);
+  const { error } = await supabase.from('negocios').update({ api_key: key }).eq('id', negocioId);
   revalidatePath('/dashboard');
-  return { success: true };
+  return error ? { error: error.message } : { success: true };
 }
 
 export async function cerrarSesion() {
