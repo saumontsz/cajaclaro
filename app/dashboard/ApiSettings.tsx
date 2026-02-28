@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Key, Copy, CheckCircle2, RefreshCw, Eye, EyeOff, Webhook, Loader2, Blocks, Clock, Check } from 'lucide-react'
+import { 
+  Key, Copy, CheckCircle2, RefreshCw, Eye, EyeOff, 
+  Webhook, Loader2, Clock, Check, Sparkles, AlertTriangle 
+} from 'lucide-react'
 import { generarApiKey } from './actions'
 
 interface ApiSettingsProps {
@@ -17,7 +20,7 @@ export default function ApiSettings({ plan, apiKey, negocioId }: ApiSettingsProp
 
   const manejarGenerar = () => {
     if (apiKey) {
-      const confirmar = confirm("Si regeneras la API Key, cualquier integración actual dejará de funcionar. ¿Estás seguro?");
+      const confirmar = confirm("Si regeneras la clave, las integraciones actuales dejarán de funcionar. ¿Continuar?");
       if (!confirmar) return;
     }
     
@@ -34,117 +37,113 @@ export default function ApiSettings({ plan, apiKey, negocioId }: ApiSettingsProp
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-gray-200 dark:border-slate-800 shadow-sm transition-all flex flex-col h-fit w-full max-w-md mx-auto">
+    <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-sm transition-all flex flex-col h-fit w-full">
       
-      {/* HEADER */}
-      <div className="mb-5 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Webhook size={18} className="text-purple-500" /> API & Webhooks
-        </h3>
-        <span className="text-[10px] font-bold uppercase bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-1 rounded-lg tracking-wider">
-          Empresa
-        </span>
+      {/* HEADER DINÁMICO */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-purple-100 dark:bg-purple-900/30 p-2.5 rounded-xl">
+            <Webhook size={20} className="text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">API & Conectores</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Automatización Pro</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800">
+           <Sparkles size={10} className="text-purple-500" />
+           <span className="text-[9px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider">{plan}</span>
+        </div>
       </div>
 
-      <p className="text-[11px] text-slate-500 mb-6 leading-relaxed">
-        Usa tu clave API estándar (JSON) para inyectar transacciones a tu cuenta desde software de terceros.
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+        Conecta <span className="font-bold text-slate-700 dark:text-slate-300">Flujent</span> con tu software de reservas, ERP o sistema de ventas para inyectar transacciones en tiempo real.
       </p>
 
-      {/* ZONA DE LA LLAVE */}
-      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
-        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">
-          Clave API Secreta
+      {/* ZONA DE CREDENCIALES */}
+      <div className="bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl p-6 border border-slate-100 dark:border-slate-800/50">
+        <label className="block text-[10px] font-black text-slate-400 uppercase mb-3 tracking-[0.2em] ml-1">
+          Secret API Token
         </label>
         
         {apiKey ? (
           <div className="space-y-4">
-            <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 shadow-sm">
+            <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-4 shadow-sm group">
               <div className="flex-1 min-w-0">
-                <p className="font-mono text-xs text-slate-800 dark:text-slate-200 truncate pr-2">
+                <code className="font-mono text-xs text-purple-600 dark:text-purple-400 font-bold break-all">
                   {mostrarKey ? apiKey : '••••••••••••••••••••••••••••••••'}
-                </p>
+                </code>
               </div>
               <button 
                 onClick={() => setMostrarKey(!mostrarKey)} 
-                className="text-slate-400 hover:text-purple-500 transition-colors shrink-0"
-                title={mostrarKey ? "Ocultar" : "Mostrar"}
+                className="ml-3 p-1 text-slate-300 hover:text-purple-500 transition-colors shrink-0"
               >
                 {mostrarKey ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button 
                 onClick={copiarAlPortapapeles}
-                className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl text-xs font-bold transition-all shadow-md shadow-purple-500/10 active:scale-95"
+                className="flex-1 flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-slate-900/10"
               >
                 {copiado ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                {copiado ? 'Copiado' : 'Copiar clave'}
+                {copiado ? 'Copiado' : 'Copiar Clave'}
               </button>
               
               <button 
                 onClick={manejarGenerar}
                 disabled={isPending}
-                className="flex items-center justify-center bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 px-4 rounded-xl transition-all disabled:opacity-50"
-                title="Regenerar clave"
+                className="flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-purple-500 px-5 rounded-2xl transition-all disabled:opacity-50"
               >
-                {isPending ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                {isPending ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
               </button>
             </div>
           </div>
         ) : (
-          <div className="text-center py-6">
-            <div className="bg-white dark:bg-slate-900 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100 dark:border-slate-800">
-              <Key size={20} className="text-slate-300 dark:text-slate-600" />
-            </div>
-            <p className="text-[11px] text-slate-500 mb-4">No has generado una clave API aún.</p>
+          <div className="text-center py-4">
             <button 
               onClick={manejarGenerar}
               disabled={isPending}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 py-3 rounded-xl text-xs font-bold transition-all disabled:opacity-50 shadow-lg"
+              className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 shadow-xl shadow-purple-500/20"
             >
-              {isPending ? <Loader2 size={16} className="animate-spin" /> : <Key size={16} />}
-              {isPending ? 'Generando...' : 'Generar Clave API'}
+              {isPending ? <Loader2 size={18} className="animate-spin" /> : <Key size={18} />}
+              {isPending ? 'Generando...' : 'Activar Acceso API'}
             </button>
           </div>
         )}
       </div>
 
-      {/* ALERTA */}
-      <div className="mt-5 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl text-[10px] text-amber-800 dark:text-amber-500 leading-relaxed">
-        <div className="flex gap-2">
-          <span className="font-bold shrink-0">Atención:</span>
-          <p>Esta clave da acceso para escribir en tu base de datos. Nunca la expongas en código frontend público.</p>
-        </div>
+      {/* ADVERTENCIA SEMÁNTICA */}
+      <div className="mt-6 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex gap-3 items-start">
+        <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+        <p className="text-[10px] text-amber-800/80 dark:text-amber-500/80 leading-relaxed font-medium uppercase tracking-tight">
+          <span className="font-black text-amber-600 dark:text-amber-400">Seguridad:</span> Esta clave permite inyectar datos financieros. Nunca la compartas ni la uses en clientes frontend públicos.
+        </p>
       </div>
 
-      {/* NUEVA SECCIÓN: CAPACIDADES Y PRÓXIMAMENTE */}
-      <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
-        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Estado de Integraciones</h4>
+      {/* FOOTER DE CAPACIDADES */}
+      <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-800">
+        <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Central de Conexiones</h4>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Tarjeta: Funciona Hoy */}
-          <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-            <h5 className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
-              <Check size={14} /> Compatible ahora
+        <div className="grid grid-cols-1 gap-3">
+          <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+            <h5 className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2 uppercase tracking-wider">
+              <Check size={14} /> Ready to go
             </h5>
-            <ul className="text-[10px] text-emerald-600/90 dark:text-emerald-500/80 space-y-1.5 ml-1">
-              <li>• Automatizaciones con Zapier o Make</li>
-              <li>• Páginas de reservas propias</li>
-              <li>• Softwares de punto de venta (vía webhook)</li>
-            </ul>
+            <div className="grid grid-cols-2 gap-y-2">
+              <span className="text-[10px] font-bold text-emerald-600/80">• Zapier / Make</span>
+              <span className="text-[10px] font-bold text-emerald-600/80">• Webhooks v1</span>
+              <span className="text-[10px] font-bold text-emerald-600/80">• POS Externo</span>
+              <span className="text-[10px] font-bold text-emerald-600/80">• Booking Engine</span>
+            </div>
           </div>
 
-          {/* Tarjeta: Próximamente */}
-          <div className="bg-blue-50/30 dark:bg-blue-900/10 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-800/30 border-dashed">
-            <h5 className="text-[11px] font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-1.5">
-              <Clock size={14} /> Adaptadores nativos
+          <div className="bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/30 border-dashed">
+            <h5 className="text-[10px] font-black text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
+              <Clock size={14} /> Roadmap
             </h5>
-            <p className="text-[10px] text-blue-600/80 dark:text-blue-500/70 mb-2">Próximamente conexión en 1 clic sin usar código para:</p>
-            <ul className="text-[10px] text-blue-600/90 dark:text-blue-500/80 space-y-1.5 ml-1 font-medium">
-              <li>• Transbank / Webpay Plus</li>
-              <li>• Mercado Pago (Maquinitas POS)</li>
-            </ul>
+            <p className="text-[10px] text-blue-600/70 dark:text-blue-500/70 font-medium italic">Sincronización automática con terminales de pago Transbank y Mercado Pago en desarrollo.</p>
           </div>
         </div>
       </div>
