@@ -5,14 +5,13 @@ import Image from 'next/image'
 import { 
   Activity, ArrowRight, TrendingUp, ShieldCheck, Zap, BarChart3, 
   Check, Sun, Moon, ChevronDown, Star, Users, Landmark, Lock, Sparkles, User, Building2
-} from "lucide-react"; // 🚀 IMPORTACIONES COMPLETAS Y CORREGIDAS
+} from "lucide-react"; 
 import Link from "next/link";
 
 export default function LandingPage() {
   const [anual, setAnual] = useState(false)
   const [isDark, setIsDark] = useState(false)
 
-  // Lógica de tema oscuro (Persistencia y detección)
   useEffect(() => {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setIsDark(true)
@@ -35,7 +34,6 @@ export default function LandingPage() {
     }
   }
 
-  // Subcomponentes para tarjetas
   const FeatureCard = ({ icon, title, desc, color }: { icon: any, title: string, desc: string, color: 'blue' | 'green' | 'purple' }) => {
     const colors = {
       blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
@@ -93,7 +91,6 @@ export default function LandingPage() {
     )
   }
 
-  // TABLA DE CARACTERÍSTICAS (Sincronizada con el Backend)
   const caracteristicas = [
     { nombre: "Registro de movimientos manuales", gratis: true, personal: true, empresa: true },
     { nombre: "Cuentas bancarias / Bolsillos", gratis: "1", personal: "Hasta 5", empresa: "Ilimitadas" },
@@ -127,7 +124,7 @@ export default function LandingPage() {
             <Link href="/login" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors hidden sm:block">
               Iniciar Sesión
             </Link>
-            <Link href="/login" className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-md shadow-blue-500/20 active:scale-95">
+            <Link href="/dashboard/planes" className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-md shadow-blue-500/20 active:scale-95">
               Comenzar Gratis
             </Link>
           </div>
@@ -154,7 +151,7 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
-            <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group hover:scale-105">
+            <Link href="/dashboard/planes" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group hover:scale-105">
               Crear mi cuenta <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link href="#precios" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 text-lg font-semibold rounded-xl transition-all flex items-center justify-center hover:scale-105">
@@ -163,17 +160,54 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* DEMO VISUAL */}
-        <section className="py-12 px-6">
-          <div className="max-w-6xl mx-auto text-center">
-            <div className="relative rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden mx-auto transform hover:scale-[1.01] transition-transform duration-500 group">
-              <div className="block dark:hidden">
-                <Image src="/dashboard claro.png" alt="Flujent Dashboard Claro" width={1400} height={900} priority className="w-full h-auto object-cover" />
+        {/* 🚀 DEMO VISUAL SCROLLEABLE (MOCKUP DE NAVEGADOR) */}
+        <section className="py-20 px-6 bg-slate-50 dark:bg-slate-950/50">
+          <div className="max-w-5xl mx-auto text-center">
+            <div className="mb-12">
+              <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+                Una interfaz diseñada para el control
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                Explora el panel completo deslizando hacia abajo dentro de la ventana. Todo lo que necesitas para tu negocio en una sola vista.
+              </p>
+            </div>
+
+            {/* ESTRUCTURA DEL NAVEGADOR */}
+            <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] overflow-hidden mx-auto">
+              
+              {/* BARRA SUPERIOR (ESTILO BROWSER) */}
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-rose-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+                </div>
+                <div className="ml-6 flex-1 max-w-md h-6 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center px-3 gap-2">
+                  <Lock size={10} className="text-slate-400" />
+                  <div className="w-24 h-2 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+                </div>
               </div>
-              <div className="hidden dark:block">
-                <Image src="/dashboard oscuro.png" alt="Flujent Dashboard Oscuro" width={1400} height={900} priority className="w-full h-auto object-cover" />
+
+              {/* CONTENEDOR DEL SCROLL */}
+              <div className="h-[500px] md:h-[600px] overflow-y-auto custom-scrollbar group">
+                <div className="relative w-full">
+                  <div className="block dark:hidden">
+                    <img 
+                      src="/dashboard claro.png" 
+                      alt="Flujent Dashboard Light" 
+                      className="w-full h-auto"
+                    />
+                  </div>
+                  <div className="hidden dark:block">
+                    <img 
+                      src="/dashboard oscuro.png" 
+                      alt="Flujent Dashboard Dark" 
+                      className="w-full h-auto"
+                    />
+                  </div>
+                  <div className="sticky bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/20 dark:from-slate-900/20 to-transparent pointer-events-none"></div>
+                </div>
               </div>
-              <div className="absolute inset-0 ring-1 ring-inset ring-black/5 dark:ring-white/5 rounded-[32px] pointer-events-none"></div>
             </div>
           </div>
         </section>
@@ -209,8 +243,6 @@ export default function LandingPage() {
         <section id="precios" className="py-24 max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Planes simples, sin letras chicas</h2>
-            
-            {/* Toggle Mensual / Anual */}
             <div className="flex items-center justify-center gap-4 bg-white dark:bg-slate-900 p-1.5 rounded-full border border-gray-200 dark:border-slate-800 w-fit mx-auto shadow-sm">
               <button 
                 onClick={() => setAnual(false)}
@@ -244,7 +276,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2 text-slate-600 dark:text-slate-400"><Check size={16} className="text-slate-400" /> Registro manual</li>
                 <li className="flex items-center gap-2 text-slate-600 dark:text-slate-400"><Check size={16} className="text-slate-400" /> Gráficos básicos</li>
               </ul>
-              <Link href="/login" className="w-full py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-white text-center font-bold text-sm rounded-xl">Empezar Gratis</Link>
+              <Link href="/dashboard/planes" className="w-full py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-white text-center font-bold text-sm rounded-xl">Empezar Gratis</Link>
             </div>
 
             {/* Personal */}
@@ -265,7 +297,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2 text-slate-600 dark:text-slate-400"><Check size={16} className="text-blue-500" /> Movimientos Recurrentes</li>
                 <li className="flex items-center gap-2 text-slate-600 dark:text-slate-400"><Check size={16} className="text-blue-500" /> Exportación a Excel</li>
               </ul>
-              <Link href="/login" className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white text-center font-bold text-sm rounded-xl shadow-lg shadow-blue-500/20 transition-all">Seleccionar</Link>
+              <Link href="/dashboard/planes" className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white text-center font-bold text-sm rounded-xl shadow-lg shadow-blue-500/20 transition-all">Seleccionar</Link>
             </div>
 
             {/* Empresa */}
@@ -286,12 +318,14 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2 text-slate-600 dark:text-slate-400"><Check size={16} className="text-purple-500" /> Acceso API</li>
                 <li className="flex items-center gap-2 text-slate-600 dark:text-slate-400"><Check size={16} className="text-purple-500" /> Categorización Pro</li>
               </ul>
-              <Link href="/login" className="w-full py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white text-center font-bold text-sm rounded-xl transition-all hover:opacity-90">Seleccionar</Link>
+              <Link href="/dashboard/planes" className="w-full py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white text-center font-bold text-sm rounded-xl transition-all hover:opacity-90">Seleccionar</Link>
             </div>
           </div>
+        </section>
 
-          {/* TABLA COMPARATIVA CON CANDADOS PRO 🔒 */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mt-16">
+        {/* COMPARATIVA */}
+        <section className="py-16 max-w-6xl mx-auto px-6">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div className="p-8 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center">
               <h3 className="text-2xl font-black text-slate-900 dark:text-white">Comparativa de Poder</h3>
             </div>
@@ -299,7 +333,7 @@ export default function LandingPage() {
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800">
-                    <th className="py-5 px-6 font-bold text-slate-500 w-2/5 text-[10px] uppercase tracking-widest">Características Clave</th>
+                    <th className="py-5 px-6 font-bold text-slate-500 w-2/5 text-[10px] uppercase tracking-widest">Características</th>
                     <th className="py-5 px-6 font-bold text-slate-900 dark:text-white text-center w-1/5">Semilla</th>
                     <th className="py-5 px-6 font-bold text-blue-600 dark:text-blue-400 text-center w-1/5">Personal</th>
                     <th className="py-5 px-6 font-bold text-purple-600 dark:text-purple-400 text-center w-1/5">Empresa</th>
@@ -309,7 +343,6 @@ export default function LandingPage() {
                   {caracteristicas.map((item, index) => (
                     <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="py-4 px-6 text-[13px] font-semibold text-slate-700 dark:text-slate-300">{item.nombre}</td>
-                      
                       <td className="py-4 px-6 text-center text-[13px] font-bold text-slate-500">
                         {typeof item.gratis === 'string' ? item.gratis : (item.gratis ? <Check size={18} className="mx-auto text-slate-400" /> : <Lock size={14} className="mx-auto text-slate-300 dark:text-slate-700" />)}
                       </td>
@@ -332,8 +365,8 @@ export default function LandingPage() {
           <div className="max-w-3xl mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-12">Dudas frecuentes</h2>
             <div className="space-y-4 text-left">
-              <FaqItem pregunta="¿Necesito conocimientos de contabilidad?" respuesta="Para nada. Flujent está diseñado para dueños de negocios y personas naturales. Usamos lenguaje simple sin términos complejos." />
-              <FaqItem pregunta="¿Mis datos están seguros?" respuesta="Absolutamente. Flujent utiliza tecnología PostgreSQL con cifrado de grado bancario (AES-256) gestionado por Supabase." />
+              <FaqItem pregunta="¿Necesito conocimientos de contabilidad?" respuesta="Para nada. Flujent está diseñado para personas reales. Usamos lenguaje simple y automatizamos los cálculos difíciles." />
+              <FaqItem pregunta="¿Mis datos están seguros?" respuesta="Absolutamente. Utilizamos cifrado de grado bancario (AES-256) gestionado por Supabase para proteger tu información financiera." />
             </div>
           </div>
         </section>
@@ -342,9 +375,9 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="py-12 text-center border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950">
         <div className="flex items-center justify-center gap-2 mb-4 text-slate-900 dark:text-white font-bold">
-           <Activity size={20} /> Flujent
+            <Activity size={20} /> Flujent
         </div>
-        <p className="text-slate-500 dark:text-slate-600 text-sm">© {new Date().getFullYear()} Flujent. Hecho en Chile para emprendedores.</p>
+        <p className="text-slate-500 dark:text-slate-600 text-sm">© {new Date().getFullYear()} Flujent. Hecho en Chile para el mundo.</p>
         <div className="flex items-center justify-center gap-4 mt-4 text-xs text-slate-400">
           <Link href="/privacy" className="hover:text-blue-500 transition-colors">Privacidad</Link>
           <Link href="/terms" className="hover:text-blue-500 transition-colors">Términos</Link>

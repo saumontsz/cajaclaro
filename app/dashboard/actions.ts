@@ -47,7 +47,7 @@ function convertirFechaExcel(excelDate: any) {
 }
 
 /**
- * 1. GESTIÓN DE NEGOCIO Y CUENTAS
+ * 1. GESTIÓN DE NEGOCIO Y ONBOARDING
  */
 export async function crearNegocio(formData: FormData) {
   const supabase = await createClient()
@@ -79,7 +79,9 @@ export async function crearNegocio(formData: FormData) {
   })
 
   revalidatePath('/dashboard')
-  redirect('/dashboard')
+  
+  // 🚀 REDIRECCIÓN ESTRATÉGICA: Registro -> Selección de Planes
+  redirect('/dashboard/planes')
 }
 
 export async function crearCuentaNueva(negocioId: string, nombre: string, saldo: number) {
@@ -105,30 +107,25 @@ export async function crearCuentaNueva(negocioId: string, nombre: string, saldo:
 }
 
 /**
- * 2. IMPORTACIÓN INTELIGENTE (Solución error 'user is null' 🛠️)
+ * 2. IMPORTACIÓN INTELIGENTE
  */
 export async function importarMasivo(negocioId: string, datosExcel: any[], cuentaIdForzada?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'No autenticado', success: false, procesadas: 0, descartadas: [] };
 
-  const userId = user.id; // 🚀 Capturamos el ID en una constante para asegurar el tipo string
+  const userId = user.id; 
 
   const { data: cuentasDB } = await supabase.from('cuentas').select('id, nombre').eq('negocio_id', negocioId);
   const mapaCuentas = new Map<string, string>();
   cuentasDB?.forEach(c => mapaCuentas.set(normalizar(c.nombre), c.id));
 
-  // Sub-función corregida con userId explícito
   async function obtenerOCrearCuenta(nombreBase: string) {
     const nombreNorm = normalizar(nombreBase);
     if (mapaCuentas.has(nombreNorm)) return mapaCuentas.get(nombreNorm);
 
     const { data: nuevaCuenta } = await supabase.from('cuentas').insert({
-      negocio_id: negocioId, 
-      user_id: userId, // 🚀 Usamos la constante segura
-      nombre: nombreBase, 
-      saldo_inicial: 0, 
-      tipo: 'banco'
+      negocio_id: negocioId, user_id: userId, nombre: nombreBase, saldo_inicial: 0, tipo: 'banco'
     }).select('id').single();
 
     if (nuevaCuenta) mapaCuentas.set(nombreNorm, nuevaCuenta.id);
@@ -155,7 +152,7 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
 
     const montoRaw = parseNumber(row.monto || row.valor || row.monto_unico || 0);
     const tipoTexto = String(row.tipo || '').toLowerCase();
-    const esGasto = tipoTexto.includes('gast') || tipoTexto.includes('egre') || montoRaw < 0;
+    const esGasto = tipoTexto.includes('gast') || tipoTexto.includes('egre') || tipoTexto.includes('cargo') || montoRaw < 0;
 
     if (montoRaw === 0) {
       filasDescartadas.push({ fila: index + 2, motivo: 'Monto cero', datos: fila });
@@ -184,7 +181,7 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
 }
 
 /**
- * 3. RECURRENCIA Y TRANSACCIONES
+ * 3. RECURRENCIA Y TRANSACCIONES (RESTAURADO 🔄)
  */
 export async function toggleRecurrente(id: string, estadoActual: string) {
   const supabase = await createClient();
@@ -203,13 +200,60 @@ export async function agregarTransaccion(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return redirect('/login');
-  const { error } = await supabase.from('transacciones').insert({
-    negocio_id: formData.get('negocio_id'), user_id: user.id, cuenta_id: formData.get('cuenta_id'),
-    tipo: formData.get('tipo'), monto: Number(formData.get('monto')), descripcion: formData.get('descripcion'),
-    categoria: formData.get('categoria') || 'Otros', created_at: (formData.get('fecha') as string) || new Date().toISOString()
+
+  const negocio_id = formData.get('negocio_id') as string;
+  const tipo = formData.get('tipo') as string;
+  const monto = Number(formData.get('monto'));
+  const descripcion = formData.get('descripcion') as string;
+  const cuenta_id = formData.get('cuenta_id') as string;
+  const categoria = (formData.get('categoria') as string) || (tipo === 'ingreso' ? 'Ventas' : 'Operativo');
+  const fechaStr = (formData.get('fecha') as string) || new Date().toISOString();
+  
+  // 🚀 Lógica de Recurrencia
+  const esRecurrente = formData.get('es_recurrente') === 'true';
+  const frecuencia = (formData.get('frecuencia') as string) || 'mensual';
+
+  // 🔒 Bloqueo por Plan Gratis
+  if (esRecurrente) {
+    const plan = await obtenerPlan(supabase, negocio_id);
+    if (plan === 'gratis') {
+      return { error: 'Los movimientos recurrentes son exclusivos de planes de pago. 👑' };
+    }
+  }
+
+  // 1. Insertamos el movimiento actual en el historial
+  const { error: txError } = await supabase.from('transacciones').insert({
+    negocio_id, user_id: user.id, cuenta_id, tipo, monto, descripcion, categoria, created_at: fechaStr
   });
+  
+  if (txError) return { error: txError.message };
+
+  // 2. Si es recurrente, creamos el molde para futuros cobros
+  if (esRecurrente) {
+    const fechaBase = new Date(fechaStr);
+    let proxima = new Date(fechaBase);
+    
+    if (frecuencia === 'semanal') proxima.setDate(proxima.getDate() + 7);
+    else if (frecuencia === 'mensual') proxima.setMonth(proxima.getMonth() + 1);
+    else if (frecuencia === 'anual') proxima.setFullYear(proxima.getFullYear() + 1);
+
+    const { error: recError } = await supabase.from('movimientos_recurrentes').insert({
+      user_id: user.id,
+      negocio_id,
+      cuenta_id,
+      tipo,
+      monto,
+      descripcion,
+      frecuencia,
+      proxima_ejecucion: proxima.toISOString().split('T')[0],
+      estado: 'activo'
+    });
+
+    if (recError) return { error: recError.message };
+  }
+
   revalidatePath('/dashboard');
-  return error ? { error: error.message } : { success: true };
+  return { success: true };
 }
 
 /**

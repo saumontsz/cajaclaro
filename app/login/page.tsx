@@ -7,16 +7,22 @@ import { Activity, Loader2, AlertCircle } from 'lucide-react'
 import { login } from './actions' 
 import { createClient } from '@/utils/supabase/client' 
 
-function GoogleButton({ disabled }: { disabled: boolean }) {
+// 🚀 ACTUALIZADO: Ahora recibe la prop "next" para saber a dónde ir tras loguearse
+function GoogleButton({ disabled, next }: { disabled: boolean; next: string }) {
   const [loadingGoogle, setLoadingGoogle] = useState(false)
 
   const handleGoogleLogin = async () => {
     setLoadingGoogle(true)
     const supabase = createClient()
+    
+    // Configuramos la redirección para que incluya el destino final (Planes)
+    const locale = typeof window !== 'undefined' ? window.location.origin : ''
+    const redirectTo = `${locale}/auth/callback?next=${encodeURIComponent(next)}`
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo,
         queryParams: { access_type: 'offline', prompt: 'consent' },
       },
     })
@@ -49,19 +55,23 @@ function GoogleButton({ disabled }: { disabled: boolean }) {
 function LoginForm() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
+  
+  // 🚀 CAPTURAMOS EL DESTINO: Si viene de la landing buscando planes, "next" será "/dashboard/planes"
+  const next = searchParams.get('next') || '/dashboard/planes'
+  
   const errorUrl = searchParams.get('error')
   const messageUrl = searchParams.get('message')
 
   const handleEmailLogin = async (formData: FormData) => {
     setLoading(true)
-    await login(formData)
+    // Pasamos el destino a la acción de login
+    await login(formData, next) 
     setLoading(false)
   }
 
   return (
     <div className="w-full max-w-sm">
       <div className="text-center mb-8">
-        {/* LOGO DE FLUJENT */}
         <Link href="/" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-500 font-bold text-2xl group mb-4">
           <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
              <Activity className="text-white" size={24} />
@@ -80,7 +90,7 @@ function LoginForm() {
       <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800 transition-colors">
         
         <div className="mb-6">
-          <GoogleButton disabled={loading} />
+          <GoogleButton disabled={loading} next={next} />
         </div>
 
         <div className="relative mb-6">
@@ -95,6 +105,9 @@ function LoginForm() {
         </div>
 
         <form action={handleEmailLogin} className="flex flex-col gap-4">
+          {/* Input oculto para que el Server Action sepa a dónde redirigir */}
+          <input type="hidden" name="next" value={next} />
+
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 ml-1">Correo electrónico</label>
             <input 
@@ -129,7 +142,6 @@ function LoginForm() {
           )}
           
           <div className="flex flex-col gap-3 mt-2">
-            {/* 🚀 BOTÓN AHORA ES AZUL (bg-blue-600) */}
             <button 
               type="submit"
               disabled={loading}
@@ -140,19 +152,16 @@ function LoginForm() {
             
             <div className="text-center pt-2">
               <Link 
-                href="/register" 
+                // 🚀 CLAVE: Si el usuario va a registrarse, pasamos también el parámetro "next"
+                href={`/register?next=${encodeURIComponent(next)}`} 
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors font-medium"
               >
-                ¿No tienes cuenta? <span className="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:decoration-slate-500 font-bold text-blue-600 dark:text-blue-400">Regístrate aquí</span>
+                ¿No tienes cuenta? <span className="underline font-bold text-blue-600 dark:text-blue-400">Regístrate aquí</span>
               </Link>
             </div>
           </div>
         </form>
       </div>
-
-      <p className="mt-8 text-[10px] text-slate-400 dark:text-slate-500 text-center max-w-xs mx-auto leading-relaxed">
-        Al continuar, aceptas nuestros <Link href="/terms" className="underline">Términos de Servicio</Link> y <Link href="/privacy" className="underline">Política de Privacidad</Link>.
-      </p>
     </div>
   )
 }
