@@ -6,14 +6,14 @@ import { redirect } from 'next/navigation'
 
 /**
  * ==========================================
- * 🧠 MOTOR DE NORMALIZACIÓN E INTELIGENCIA (v7.2)
+ * 🧠 MOTOR DE NORMALIZACIÓN E INTELIGENCIA (v7.3)
  * ==========================================
  */
 const normalizar = (nombre: string) => {
   if (!nombre) return "";
   let n = nombre.toLowerCase().trim()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
-    .replace(/[^a-z0-9]/g, ''); // Quita espacios y puntos
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+    .replace(/[^a-z0-9]/g, ''); 
 
   const diccionarioAlias: Record<string, string> = {
     'amex': 'americanexpress',
@@ -47,7 +47,7 @@ function convertirFechaExcel(excelDate: any) {
 }
 
 /**
- * 2. GESTIÓN DE NEGOCIOS Y CUENTAS
+ * 1. GESTIÓN DE NEGOCIO Y CUENTAS
  */
 export async function crearNegocio(formData: FormData) {
   const supabase = await createClient()
@@ -108,7 +108,7 @@ export async function crearCuentaNueva(negocioId: string, nombre: string, saldo:
 }
 
 /**
- * 3. IMPORTACIÓN MASIVA INTELIGENTE (Corregida para Gastos e Inconsistencias)
+ * 2. IMPORTACIÓN INTELIGENTE (Smart Match & Tipo Gasto)
  */
 export async function importarMasivo(negocioId: string, datosExcel: any[], cuentaIdForzada?: string) {
   const supabase = await createClient();
@@ -116,7 +116,7 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
   if (!user) return { error: 'No autenticado' };
 
   const plan = await obtenerPlan(supabase, negocioId);
-  if (plan === 'gratis') return { error: 'La importación es exclusiva de planes superiores. 👑' };
+  if (plan === 'gratis') return { error: 'Importación exclusiva del plan Empresa.' };
 
   const { data: cuentasDB } = await supabase.from('cuentas').select('id, nombre').eq('negocio_id', negocioId);
   const mapaCuentas = new Map<string, string>();
@@ -125,11 +125,9 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
   async function obtenerOCrearCuenta(nombreBase: string) {
     const nombreNorm = normalizar(nombreBase);
     if (mapaCuentas.has(nombreNorm)) return mapaCuentas.get(nombreNorm);
-
     const { data: nuevaCuenta } = await supabase.from('cuentas').insert({
       negocio_id: negocioId, user_id: user.id, nombre: nombreBase, saldo_inicial: 0, tipo: 'banco'
     }).select('id').single();
-
     if (nuevaCuenta) mapaCuentas.set(nombreNorm, nuevaCuenta.id);
     return nuevaCuenta?.id;
   }
@@ -152,16 +150,9 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
       return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
     };
 
-    const montoRaw = parseNumber(row.monto || row.valor || row.monto_unico);
+    const montoRaw = parseNumber(row.monto || row.valor || 0);
     const tipoTexto = String(row.tipo || '').toLowerCase();
-    
-    // 🚀 DETECCIÓN DE GASTO: Por palabra clave o número negativo
-    const esGasto = tipoTexto.includes('gast') || tipoTexto.includes('egre') || tipoTexto.includes('cargo') || montoRaw < 0;
-
-    if (montoRaw === 0) {
-      filasDescartadas.push({ fila: index + 2, motivo: 'Monto cero', datos: fila });
-      continue;
-    }
+    const esGasto = tipoTexto.includes('gast') || tipoTexto.includes('egre') || montoRaw < 0;
 
     let idCuentaFila = cuentaIdForzada; 
     if (!idCuentaFila) {
@@ -180,62 +171,64 @@ export async function importarMasivo(negocioId: string, datosExcel: any[], cuent
     });
   }
 
-  if (transaccionesLimpias.length === 0) return { error: 'Sin datos válidos', descartadas: filasDescartadas };
-
   const { error } = await supabase.from('transacciones').insert(transaccionesLimpias);
-  if (error) return { error: error.message };
-
   revalidatePath('/dashboard');
-  return { success: true, procesadas: transaccionesLimpias.length, descartadas: filasDescartadas };
+  return error ? { error: error.message } : { success: true, procesadas: transaccionesLimpias.length, descartadas: filasDescartadas };
 }
 
 /**
- * 4. TRANSACCIONES, TRASPASOS Y RECURRENCIA
+ * 3. RECURRENCIA Y TRANSACCIONES
  */
-export async function agregarTransaccion(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return redirect('/login')
-
-  const tipo = formData.get('tipo') as string;
-  const monto = Number(formData.get('monto'));
-  const descripcion = formData.get('descripcion') as string;
-  const negocio_id = formData.get('negocio_id') as string;
-  const fechaStr = (formData.get('fecha') as string) || new Date().toISOString();
-  const cuenta_id = formData.get('cuenta_id') as string;
-
-  const { error } = await supabase.from('transacciones').insert({
-    negocio_id, user_id: user.id, cuenta_id, tipo, monto, 
-    descripcion, categoria: (formData.get('categoria') as string) || 'Otros', created_at: fechaStr
-  });
-  
+export async function toggleRecurrente(id: string, estadoActual: string) {
+  const supabase = await createClient();
+  const nuevo = estadoActual === 'activo' ? 'pausado' : 'activo';
+  const { error } = await supabase.from('movimientos_recurrentes').update({ estado: nuevo }).eq('id', id);
   if (error) return { error: error.message };
   revalidatePath('/dashboard');
   return { success: true };
 }
 
-export async function toggleRecurrente(id: string, estadoActual: string) {
-  const supabase = await createClient();
-  const nuevo = estadoActual === 'activo' ? 'pausado' : 'activo';
-  const { error } = await supabase.from('movimientos_recurrentes').update({ estado: nuevo }).eq('id', id);
-  revalidatePath('/dashboard');
-  return { success: true }; 
-}
-
 export async function eliminarRecurrente(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from('movimientos_recurrentes').delete().eq('id', id);
+  if (error) return { error: error.message };
   revalidatePath('/dashboard');
-  return { success: true }; 
+  return { success: true };
+}
+
+export async function agregarTransaccion(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return redirect('/login');
+
+  const { error } = await supabase.from('transacciones').insert({
+    negocio_id: formData.get('negocio_id'),
+    user_id: user.id,
+    cuenta_id: formData.get('cuenta_id'),
+    tipo: formData.get('tipo'),
+    monto: Number(formData.get('monto')),
+    descripcion: formData.get('descripcion'),
+    categoria: formData.get('categoria') || 'Otros',
+    created_at: (formData.get('fecha') as string) || new Date().toISOString()
+  });
+  
+  revalidatePath('/dashboard');
+  return error ? { error: error.message } : { success: true };
 }
 
 /**
- * 5. HITOS E IDENTIDAD
+ * 4. HITOS (Proyección) 🎯
  */
 export async function guardarHito(negocioId: string, nombre: string, costo: number, ahorro: number) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: "No autenticado" }
+
+  const plan = await obtenerPlan(supabase, negocioId);
+  if (plan === 'gratis') {
+    const { count } = await supabase.from('hitos').select('*', { count: 'exact', head: true }).eq('negocio_id', negocioId);
+    if ((count || 0) >= 1) return { error: 'Límite de 1 proyecto en plan Gratis. 👑' };
+  }
 
   const { error } = await supabase.from('hitos').insert({
     user_id: user.id, negocio_id: negocioId, nombre, costo, ahorro
@@ -247,26 +240,31 @@ export async function guardarHito(negocioId: string, nombre: string, costo: numb
 }
 
 export async function borrarHito(id: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   await supabase.from('hitos').delete().eq('id', id).eq('user_id', user.id);
   revalidatePath('/dashboard');
   return { success: true }; 
 }
 
-export async function cerrarSesion() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect('/');
-}
-
+/**
+ * 5. SESIÓN Y API SETTINGS
+ */
 export async function generarApiKey(negocioId: string) {
   const supabase = await createClient();
   const plan = await obtenerPlan(supabase, negocioId);
   if (plan !== 'empresa') return { error: 'API exclusiva del plan Empresa. 👑' };
 
   const key = `fluj_live_${Math.random().toString(36).substring(2, 15)}`;
-  await supabase.from('negocios').update({ api_key: key }).eq('id', negocioId);
+  const { error } = await supabase.from('negocios').update({ api_key: key }).eq('id', negocioId);
+  
+  if (error) return { error: error.message };
   revalidatePath('/dashboard');
   return { success: true };
+}
+
+export async function cerrarSesion() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/');
 }
